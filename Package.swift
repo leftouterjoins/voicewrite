@@ -1,0 +1,25 @@
+// swift-tools-version: 6.2
+import PackageDescription
+
+let package = Package(
+    name: "VoiceWrite",
+    platforms: [
+        .macOS(.v26)
+    ],
+    products: [
+        .executable(name: "VoiceWrite", targets: ["VoiceWrite"])
+    ],
+    dependencies: [
+        .package(url: "https://github.com/sindresorhus/KeyboardShortcuts.git", from: "2.0.0"),
+    ],
+    targets: [
+        .executableTarget(
+            name: "VoiceWrite",
+            dependencies: [
+                "KeyboardShortcuts",
+            ],
+            path: "VoiceWrite",
+            exclude: ["Info.plist", "VoiceWrite.entitlements"]
+        ),
+    ]
+)

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Agent app (no dock icon) -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- Microphone permission description -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>VoiceWrite needs microphone access to transcribe your speech into text.</string>
+
+    <!-- Bundle identifiers -->
+    <key>CFBundleIdentifier</key>
+    <string>com.voicewrite.app</string>
+
+    <key>CFBundleName</key>
+    <string>VoiceWrite</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>VoiceWrite</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>VoiceWrite</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>26.0</string>
+
+    <!-- Supports automatic graphics switching -->
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+</dict>
+</plist>

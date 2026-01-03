@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  APP_NAME: VoiceWrite
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.0.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build Release
+        run: swift build -c release
+
+      - name: Create App Bundle
+        run: |
+          APP_BUNDLE="${APP_NAME}.app"
+          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+          mkdir -p "${APP_BUNDLE}/Contents/Resources"
+
+          # Copy binary
+          cp .build/release/${APP_NAME} "${APP_BUNDLE}/Contents/MacOS/"
+
+          # Copy Info.plist
+          cp VoiceWrite/Info.plist "${APP_BUNDLE}/Contents/"
+
+          # Copy entitlements for reference
+          cp VoiceWrite/VoiceWrite.entitlements "${APP_BUNDLE}/Contents/Resources/" || true
+
+          # Create PkgInfo
+          echo "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
+
+      - name: Import signing certificate
+        if: env.CERTIFICATE_BASE64 != ''
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Find signing identity
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+
+          # Sign the app
+          codesign --force --deep --options runtime --sign "$IDENTITY" --entitlements VoiceWrite/VoiceWrite.entitlements "${APP_NAME}.app"
+
+          # Verify signature
+          codesign --verify --verbose "${APP_NAME}.app"
+
+      - name: Create DMG
+        run: |
+          # Create DMG folder structure
+          mkdir -p dmg_contents
+          cp -r "${APP_NAME}.app" dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+
+          # Create DMG
+          hdiutil create -volname "${APP_NAME}" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
+
+      - name: Notarize DMG
+        if: env.APPLE_ID != ''
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait
+
+          xcrun stapler staple "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APP_NAME }}-${{ steps.version.outputs.VERSION }}.dmg
+          body: |
+            ## VoiceWrite ${{ steps.version.outputs.VERSION }}
+
+            See [CHANGELOG.md](https://github.com/leftouterjoins/voicewrite/blob/main/CHANGELOG.md) for details.
+
+            ### Installation
+            1. Download the DMG below
+            2. Open it and drag VoiceWrite to Applications
+            3. Launch VoiceWrite from Applications
+
+            ### Requirements
+            - macOS 26.0 (Tahoe) or later
+            - Microphone permission
+            - Accessibility permission
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
