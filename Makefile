@@ -5,6 +5,7 @@ BUILD_DIR := .build
 APP_BUNDLE := $(APP_NAME).app
 INSTALL_DIR := /Applications
 CODESIGN_IDENTITY := Apple Development: support@pineridgeranch.net (Z42AQ7N7KX)
+ENTITLEMENTS := VoiceWrite/VoiceWrite.entitlements
 
 # Debug build
 build:
@@ -24,7 +25,7 @@ app: release
 	@cp $(BUILD_DIR)/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
 	@cp VoiceWrite/Info.plist $(APP_BUNDLE)/Contents/
 	@echo "APPL????" > $(APP_BUNDLE)/Contents/PkgInfo
-	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" $(APP_BUNDLE)
+	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
 
 # Run the app

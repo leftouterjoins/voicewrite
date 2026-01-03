@@ -34,7 +34,7 @@
 
 - **Privacy-first** — Uses Apple's on-device SpeechAnalyzer. No cloud, no subscription, no data leaves your Mac.
 - **Lightweight** — Under 1MB with no bundled models. Speech models are managed by macOS.
-- **Visual feedback** — Audio-reactive screen border pulses at 120fps while listening.
+- **Visual feedback** — Screen border glows while recording so you know it's working.
 - **Works anywhere** — Global hotkey lets you dictate into any app.
 - **Customizable** — Choose border colors and set your preferred keyboard shortcut.
 - **Open source** — MIT licensed. Free forever.
