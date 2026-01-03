@@ -1,7 +1,9 @@
 import SwiftUI
+import KeyboardShortcuts
 
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openSettings) private var openSettings
     @State private var hasInitialized = false
 
     var body: some View {
@@ -28,28 +30,39 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Listening toggle button
-            Button(action: appState.toggleListening) {
-                Label(
-                    appState.isListening ? "Stop Listening" : "Start Listening",
-                    systemImage: appState.isListening ? "stop.circle.fill" : "mic.circle.fill"
-                )
-                .frame(maxWidth: .infinity)
+            // Shortcut hint
+            if let shortcut = KeyboardShortcuts.getShortcut(for: .toggleListening) {
+                HStack {
+                    Text("Press")
+                        .foregroundStyle(.secondary)
+                    Text(shortcut.description)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.secondary.opacity(0.2))
+                        .cornerRadius(4)
+                    Text("to toggle")
+                        .foregroundStyle(.secondary)
+                }
+                .font(.caption)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(appState.isListening ? .red : .accentColor)
-            .disabled(!appState.isModelLoaded)
 
             Divider()
 
             // Settings and Quit
-            SettingsLink {
+            Button {
+                openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+            } label: {
                 Label("Settings...", systemImage: "gear")
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
 
             Button(action: { NSApplication.shared.terminate(nil) }) {
                 Label("Quit VoiceWrite", systemImage: "power")
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
         }
         .padding()
         .frame(width: 220)
