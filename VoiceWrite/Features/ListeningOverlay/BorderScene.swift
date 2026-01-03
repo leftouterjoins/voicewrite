@@ -20,9 +20,10 @@ class BorderScene: SKScene {
     private var borderColor: NSColor {
         let useCustom = UserDefaults.standard.bool(forKey: "useCustomColor")
         if useCustom {
-            let r = UserDefaults.standard.double(forKey: "customColorRed")
-            let g = UserDefaults.standard.double(forKey: "customColorGreen")
-            let b = UserDefaults.standard.double(forKey: "customColorBlue")
+            let defaults = UserDefaults.standard
+            let r = defaults.object(forKey: "customColorRed") as? Double ?? 1.0
+            let g = defaults.object(forKey: "customColorGreen") as? Double ?? 0.3
+            let b = defaults.object(forKey: "customColorBlue") as? Double ?? 0.2
             return NSColor(red: r, green: g, blue: b, alpha: 0.6)
         }
         // Default: adapt to dark/light mode
