@@ -25,6 +25,8 @@ app: release
 	@cp $(BUILD_DIR)/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
 	@cp VoiceWrite/Info.plist $(APP_BUNDLE)/Contents/
 	@echo "APPL????" > $(APP_BUNDLE)/Contents/PkgInfo
+	@# Copy SwiftPM resource bundles
+	@cp -r $(BUILD_DIR)/arm64-apple-macosx/release/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
 	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
 
