@@ -18,6 +18,14 @@ class BorderScene: SKScene {
     private var lastUpdateTime: TimeInterval = 0
 
     private var borderColor: NSColor {
+        let useCustom = UserDefaults.standard.bool(forKey: "useCustomColor")
+        if useCustom {
+            let r = UserDefaults.standard.double(forKey: "customColorRed")
+            let g = UserDefaults.standard.double(forKey: "customColorGreen")
+            let b = UserDefaults.standard.double(forKey: "customColorBlue")
+            return NSColor(red: r, green: g, blue: b, alpha: 0.6)
+        }
+        // Default: adapt to dark/light mode
         let isDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         return isDarkMode
             ? NSColor.white.withAlphaComponent(0.13)

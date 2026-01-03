@@ -25,7 +25,12 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
-    @AppStorage("overlayColor") private var overlayColorRaw = OverlayColor.redOrange.rawValue
+    @AppStorage("useCustomColor") private var useCustomColor = false
+    @AppStorage("customColorRed") private var customColorRed = 1.0
+    @AppStorage("customColorGreen") private var customColorGreen = 0.3
+    @AppStorage("customColorBlue") private var customColorBlue = 0.2
+
+    @State private var selectedColor: Color = .red
 
     var body: some View {
         Form {
@@ -34,14 +39,24 @@ struct GeneralSettingsView: View {
                     LaunchAtLoginManager.shared.setEnabled(newValue)
                 }
 
-            Picker("Border Color", selection: $overlayColorRaw) {
-                ForEach(OverlayColor.allCases) { color in
-                    Text(color.rawValue).tag(color.rawValue)
-                }
+            Toggle("Use Custom Border Color", isOn: $useCustomColor)
+
+            if useCustomColor {
+                ColorPicker("Border Color", selection: $selectedColor, supportsOpacity: false)
+                    .onChange(of: selectedColor) { _, newColor in
+                        if let components = NSColor(newColor).usingColorSpace(.sRGB) {
+                            customColorRed = Double(components.redComponent)
+                            customColorGreen = Double(components.greenComponent)
+                            customColorBlue = Double(components.blueComponent)
+                        }
+                    }
             }
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            selectedColor = Color(red: customColorRed, green: customColorGreen, blue: customColorBlue)
+        }
     }
 }
 
