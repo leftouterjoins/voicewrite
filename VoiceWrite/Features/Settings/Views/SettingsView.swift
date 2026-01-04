@@ -25,6 +25,7 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
+    @AppStorage("showBorderVisualization") private var showBorderVisualization = true
     @AppStorage("useCustomColor") private var useCustomColor = false
     @AppStorage("customColorRed") private var customColorRed = 1.0
     @AppStorage("customColorGreen") private var customColorGreen = 0.3
@@ -39,9 +40,12 @@ struct GeneralSettingsView: View {
                     LaunchAtLoginManager.shared.setEnabled(newValue)
                 }
 
-            Toggle("Use Custom Border Color", isOn: $useCustomColor)
+            Toggle("Show Border Visualization", isOn: $showBorderVisualization)
 
-            if useCustomColor {
+            Toggle("Use Custom Border Color", isOn: $useCustomColor)
+                .disabled(!showBorderVisualization)
+
+            if useCustomColor && showBorderVisualization {
                 ColorPicker("Border Color", selection: $selectedColor, supportsOpacity: false)
                     .onChange(of: selectedColor) { _, newColor in
                         if let components = NSColor(newColor).usingColorSpace(.sRGB) {

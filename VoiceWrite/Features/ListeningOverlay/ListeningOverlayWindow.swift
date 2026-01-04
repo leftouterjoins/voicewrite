@@ -53,6 +53,11 @@ final class ListeningOverlayManager {
     func show() {
         hide()
 
+        // Check if visualization is enabled
+        guard UserDefaults.standard.object(forKey: "showBorderVisualization") as? Bool ?? true else {
+            return
+        }
+
         for screen in NSScreen.screens {
             let window = ListeningOverlayWindow(screen: screen)
             window.orderFrontRegardless()
