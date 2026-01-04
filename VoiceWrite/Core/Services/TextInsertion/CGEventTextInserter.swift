@@ -17,6 +17,8 @@ struct CGEventTextInserter: @unchecked Sendable {
         guard !text.isEmpty else { return }
         for character in text {
             await typeCharacter(character)
+            // Small delay to let receiving app process keystroke
+            try? await Task.sleep(for: .milliseconds(10))
         }
     }
 
@@ -35,6 +37,9 @@ struct CGEventTextInserter: @unchecked Sendable {
 
             keyDown.post(tap: .cghidEventTap)
             keyUp.post(tap: .cghidEventTap)
+
+            // Small delay to let receiving app process backspace
+            try? await Task.sleep(for: .milliseconds(10))
         }
     }
 
