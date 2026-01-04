@@ -110,9 +110,9 @@ class BorderScene: SKScene {
         let speed: CGFloat = 25.0
         currentLevel += (targetLevel - currentLevel) * min(1.0, speed * deltaTime)
 
-        // Map level to thickness: 3px to 100px
+        // Map level to thickness: 3px to 5% of screen dimension
         let minThickness: CGFloat = 3
-        let maxThickness: CGFloat = 100
+        let maxThickness: CGFloat = min(size.width, size.height) * 0.05
         let thickness = minThickness + currentLevel * (maxThickness - minThickness)
 
         updateEdgePaths(thickness: thickness)
