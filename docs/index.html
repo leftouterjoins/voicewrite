@@ -183,6 +183,9 @@
 
         lightboxVideo.addEventListener('play', updateControls);
         lightboxVideo.addEventListener('pause', updateControls);
+        lightboxVideo.addEventListener('ended', () => {
+            setTimeout(() => closeLightbox({ target: lightbox }), 3000);
+        });
 
         document.addEventListener('keydown', (e) => {
             if (!lightbox.classList.contains('active')) return;
