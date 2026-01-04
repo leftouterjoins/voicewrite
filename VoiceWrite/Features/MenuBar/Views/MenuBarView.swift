@@ -1,5 +1,4 @@
 import SwiftUI
-import KeyboardShortcuts
 
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
@@ -16,6 +15,9 @@ struct MenuBarView: View {
                 Text(appState.isListening ? "Listening..." : "Ready")
                     .font(.headline)
                 Spacer()
+                Text(Locale.current.language.languageCode?.identifier.uppercased() ?? "")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             // Model state indicator
@@ -26,24 +28,6 @@ struct MenuBarView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(2)
-            }
-
-            Divider()
-
-            // Shortcut hint
-            if let shortcut = KeyboardShortcuts.getShortcut(for: .toggleListening) {
-                HStack {
-                    Text("Press")
-                        .foregroundStyle(.secondary)
-                    Text(shortcut.description)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.2))
-                        .cornerRadius(4)
-                    Text("to toggle")
-                        .foregroundStyle(.secondary)
-                }
-                .font(.caption)
             }
 
             Divider()
