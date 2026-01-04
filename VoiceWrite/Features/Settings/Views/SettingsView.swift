@@ -69,34 +69,18 @@ struct GeneralSettingsView: View {
 }
 
 struct HotkeySettingsView: View {
-    @State private var shortcut: KeyboardShortcuts.Shortcut?
-
     var body: some View {
         Form {
             LabeledContent("Toggle Listening") {
-                HStack {
-                    if let shortcut = shortcut {
-                        Text(shortcut.description)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.secondary.opacity(0.2))
-                            .cornerRadius(6)
-                    } else {
-                        Text("Ctrl+V")
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                KeyboardShortcuts.Recorder(for: .toggleListening)
             }
 
-            Text("Change hotkey in System Settings > Keyboard > Keyboard Shortcuts")
+            Text("Click the field above and press your desired key combination")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .formStyle(.grouped)
         .padding()
-        .onAppear {
-            shortcut = KeyboardShortcuts.getShortcut(for: .toggleListening)
-        }
     }
 }
 

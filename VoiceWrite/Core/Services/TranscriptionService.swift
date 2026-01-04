@@ -99,6 +99,13 @@ final class TranscriptionService: ObservableObject {
         self.inputBuilder = continuation
 
         try await analyzer.start(inputSequence: stream)
+
+        // Set context with vocabulary hints for proper noun recognition
+        let context = AnalysisContext()
+        context.contextualStrings = [
+            AnalysisContext.ContextualStringsTag("vocabulary"): ["VoiceWrite"]
+        ]
+        try await analyzer.setContext(context)
     }
 
     /// Pre-warm the next session's analyzer (call after finalize)
@@ -124,6 +131,14 @@ final class TranscriptionService: ObservableObject {
 
         do {
             try await analyzer.start(inputSequence: stream)
+
+            // Set context with vocabulary hints
+            let context = AnalysisContext()
+            context.contextualStrings = [
+                AnalysisContext.ContextualStringsTag("vocabulary"): ["VoiceWrite"]
+            ]
+            try await analyzer.setContext(context)
+
             print("[VoiceWrite] Pre-warm complete")
         } catch {
             print("[VoiceWrite] Pre-warm failed: \(error)")
@@ -263,9 +278,14 @@ final class TranscriptionService: ObservableObject {
                         firstResultReceived = true
                     }
                     let rawText = String(result.text.characters)
+                    // Post-process common misrecognitions of "VoiceWrite"
                     let text = rawText
                         .replacingOccurrences(of: "voice right", with: "VoiceWrite", options: .caseInsensitive)
                         .replacingOccurrences(of: "voiceright", with: "VoiceWrite", options: .caseInsensitive)
+                        .replacingOccurrences(of: "voice wright", with: "VoiceWrite", options: .caseInsensitive)
+                        .replacingOccurrences(of: "voicewright", with: "VoiceWrite", options: .caseInsensitive)
+                        .replacingOccurrences(of: "voice rite", with: "VoiceWrite", options: .caseInsensitive)
+                        .replacingOccurrences(of: "voicerite", with: "VoiceWrite", options: .caseInsensitive)
                     print("[VoiceWrite] Result received: isFinal=\(result.isFinal), chars=\(text.count), text=\"\(text)\"")
 
                     if result.isFinal {

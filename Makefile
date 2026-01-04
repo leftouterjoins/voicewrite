@@ -19,6 +19,11 @@ build:
 
 # Release build
 release:
+	@# Ensure dependencies are resolved
+	swift package resolve
+	@# Patch KeyboardShortcuts to use resourceURL for bundle lookup (works with macOS app bundles)
+	@sed -i '' 's|NSLocalizedString(self, bundle: .module, comment: self)|NSLocalizedString(self, bundle: Bundle.main.resourceURL.flatMap { $$0.appendingPathComponent("KeyboardShortcuts_KeyboardShortcuts.bundle") }.flatMap { Bundle(url: $$0) } ?? .module, comment: self)|g' \
+		.build/checkouts/KeyboardShortcuts/Sources/KeyboardShortcuts/Utilities.swift 2>/dev/null || true
 	swift build -c release
 	@echo "Release build complete"
 
@@ -30,9 +35,11 @@ app: release
 	@cp $(BUILD_DIR)/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
 	@cp VoiceWrite/Info.plist $(APP_BUNDLE)/Contents/
 	@echo "APPL????" > $(APP_BUNDLE)/Contents/PkgInfo
-	@# Copy SwiftPM resource bundles and icon
+	@# Copy SwiftPM resource bundles to Contents/Resources/ (patched accessor looks here)
 	@cp -r $(BUILD_DIR)/arm64-apple-macosx/release/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@# Copy app icon to Resources
 	@cp VoiceWrite/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
+	@# Sign the app with --deep to sign all nested bundles
 	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" --options runtime --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
 
