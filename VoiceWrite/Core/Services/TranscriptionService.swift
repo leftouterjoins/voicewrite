@@ -28,7 +28,7 @@ final class TranscriptionService: ObservableObject {
         // Create initial transcriber to get audio format and verify model
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [],
+            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
@@ -80,7 +80,7 @@ final class TranscriptionService: ObservableObject {
 
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [],
+            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
@@ -102,7 +102,7 @@ final class TranscriptionService: ObservableObject {
         print("[VoiceWrite] Pre-warming next analyzer")
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [],
+            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
