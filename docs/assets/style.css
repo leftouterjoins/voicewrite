@@ -156,6 +156,115 @@ header .back-link:hover {
     border: 1px solid var(--color-border);
 }
 
+.video-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.video-wrapper:hover .video-expand-hint {
+    opacity: 1;
+}
+
+.video-expand-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.lightbox-content video {
+    max-width: 90vw;
+    max-height: 80vh;
+    border-radius: var(--radius);
+}
+
+.lightbox-controls {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.control-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.control-btn:hover {
+    background: var(--color-secondary-hover);
+    transform: scale(1.1);
+}
+
+.control-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Play/Pause toggle */
+.control-btn .icon-pause,
+.control-btn.paused .icon-play {
+    display: block;
+}
+
+.control-btn .icon-play,
+.control-btn.paused .icon-pause {
+    display: none;
+}
+
+/* Mute/Unmute toggle */
+.control-btn .icon-muted,
+.control-btn.muted .icon-unmuted {
+    display: none;
+}
+
+.control-btn .icon-unmuted,
+.control-btn.muted .icon-muted {
+    display: block;
+}
+
 /* Features Section */
 .features {
     padding: 80px 0;

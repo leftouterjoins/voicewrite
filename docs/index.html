@@ -31,7 +31,10 @@
                     <p class="requirements">Requires macOS 26.0 (Tahoe) or later</p>
                 </div>
                 <div class="hero-image">
-                    <video src="assets/preview.mov" autoplay loop muted playsinline class="demo" aria-label="VoiceWrite demo showing audio-reactive screen border"></video>
+                    <div class="video-wrapper" onclick="openLightbox()">
+                        <video src="assets/preview.mov" autoplay loop muted playsinline class="demo" aria-label="VoiceWrite demo showing audio-reactive screen border"></video>
+                        <div class="video-expand-hint">Click to expand</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -110,8 +113,83 @@
                 <a href="https://github.com/leftouterjoins/voicewrite/discussions">Discussions</a>
                 <a href="privacy.html">Privacy Policy</a>
             </div>
-            <p class="copyright">Made with care. MIT License.</p>
+            <p class="copyright">Made with 100% organic, grass-fed, free range vibes.</p>
         </div>
     </footer>
+
+    <!-- Video Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <div class="lightbox-content">
+            <video id="lightbox-video" src="assets/preview.mov" loop playsinline></video>
+            <div class="lightbox-controls">
+                <button class="control-btn" id="play-btn" onclick="togglePlay(event)">
+                    <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button class="control-btn" id="mute-btn" onclick="toggleMute(event)">
+                    <svg class="icon-unmuted" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    <svg class="icon-muted" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                </button>
+                <button class="control-btn" id="close-btn" onclick="closeLightbox(event)">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const lightbox = document.getElementById('lightbox');
+        const lightboxVideo = document.getElementById('lightbox-video');
+        const playBtn = document.getElementById('play-btn');
+        const muteBtn = document.getElementById('mute-btn');
+
+        function openLightbox() {
+            lightbox.classList.add('active');
+            lightboxVideo.currentTime = 0;
+            lightboxVideo.muted = false;
+            lightboxVideo.play();
+            updateControls();
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox(e) {
+            if (e.target === lightbox || e.currentTarget.id === 'close-btn') {
+                lightbox.classList.remove('active');
+                lightboxVideo.pause();
+                document.body.style.overflow = '';
+            }
+        }
+
+        function togglePlay(e) {
+            e.stopPropagation();
+            if (lightboxVideo.paused) {
+                lightboxVideo.play();
+            } else {
+                lightboxVideo.pause();
+            }
+            updateControls();
+        }
+
+        function toggleMute(e) {
+            e.stopPropagation();
+            lightboxVideo.muted = !lightboxVideo.muted;
+            updateControls();
+        }
+
+        function updateControls() {
+            playBtn.classList.toggle('paused', lightboxVideo.paused);
+            muteBtn.classList.toggle('muted', lightboxVideo.muted);
+        }
+
+        lightboxVideo.addEventListener('play', updateControls);
+        lightboxVideo.addEventListener('pause', updateControls);
+
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox({ target: lightbox });
+            if (e.key === ' ') { e.preventDefault(); togglePlay(e); }
+            if (e.key === 'm') toggleMute(e);
+        });
+    </script>
 </body>
 </html>
