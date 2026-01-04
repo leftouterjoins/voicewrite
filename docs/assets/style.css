@@ -181,6 +181,28 @@ header .back-link:hover {
     pointer-events: none;
 }
 
+.screenshot-strip {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+.screenshot-strip img {
+    width: 80px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.screenshot-strip img:hover {
+    transform: scale(1.05);
+    border-color: var(--color-primary);
+}
+
 /* Lightbox */
 .lightbox {
     position: fixed;
@@ -206,10 +228,15 @@ header .back-link:hover {
     max-height: 90vh;
 }
 
-.lightbox-content video {
+.lightbox-content video,
+.lightbox-content img {
     max-width: 90vw;
     max-height: 80vh;
     border-radius: var(--radius);
+}
+
+#lightbox-image {
+    display: none;
 }
 
 .lightbox-controls {
