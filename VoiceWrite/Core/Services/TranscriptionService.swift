@@ -29,8 +29,8 @@ final class TranscriptionService: ObservableObject {
         let transcriber = SpeechTranscriber(
             locale: locale,
             transcriptionOptions: [],
-            reportingOptions: [.volatileResults],
-            attributeOptions: [.audioTimeRange]
+            reportingOptions: [.volatileResults, .fastResults],
+            attributeOptions: []
         )
         self.transcriber = transcriber
 
@@ -81,8 +81,8 @@ final class TranscriptionService: ObservableObject {
         let transcriber = SpeechTranscriber(
             locale: locale,
             transcriptionOptions: [],
-            reportingOptions: [.volatileResults],
-            attributeOptions: [.audioTimeRange]
+            reportingOptions: [.volatileResults, .fastResults],
+            attributeOptions: []
         )
         self.transcriber = transcriber
 
@@ -103,8 +103,8 @@ final class TranscriptionService: ObservableObject {
         let transcriber = SpeechTranscriber(
             locale: locale,
             transcriptionOptions: [],
-            reportingOptions: [.volatileResults],
-            attributeOptions: [.audioTimeRange]
+            reportingOptions: [.volatileResults, .fastResults],
+            attributeOptions: []
         )
         self.warmedTranscriber = transcriber
 
