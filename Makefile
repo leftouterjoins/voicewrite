@@ -30,8 +30,9 @@ app: release
 	@cp $(BUILD_DIR)/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
 	@cp VoiceWrite/Info.plist $(APP_BUNDLE)/Contents/
 	@echo "APPL????" > $(APP_BUNDLE)/Contents/PkgInfo
-	@# Copy SwiftPM resource bundles
+	@# Copy SwiftPM resource bundles and icon
 	@cp -r $(BUILD_DIR)/arm64-apple-macosx/release/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@cp VoiceWrite/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
 	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" --options runtime --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
 
