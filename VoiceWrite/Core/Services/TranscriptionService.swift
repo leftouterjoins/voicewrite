@@ -28,7 +28,7 @@ final class TranscriptionService: ObservableObject {
         // Create initial transcriber to get audio format and verify model
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
+            transcriptionOptions: [],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
@@ -80,7 +80,7 @@ final class TranscriptionService: ObservableObject {
 
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
+            transcriptionOptions: [],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
@@ -102,7 +102,7 @@ final class TranscriptionService: ObservableObject {
         print("[VoiceWrite] Pre-warming next analyzer")
         let transcriber = SpeechTranscriber(
             locale: locale,
-            transcriptionOptions: [.customVocabulary(["VoiceWrite"])],
+            transcriptionOptions: [],
             reportingOptions: [.volatileResults],
             attributeOptions: [.audioTimeRange]
         )
@@ -255,7 +255,10 @@ final class TranscriptionService: ObservableObject {
                         print("[VoiceWrite] First result after \(String(format: "%.2f", elapsed))s")
                         firstResultReceived = true
                     }
-                    let text = String(result.text.characters)
+                    let rawText = String(result.text.characters)
+                    let text = rawText
+                        .replacingOccurrences(of: "voice right", with: "VoiceWrite", options: .caseInsensitive)
+                        .replacingOccurrences(of: "voiceright", with: "VoiceWrite", options: .caseInsensitive)
                     print("[VoiceWrite] Result received: isFinal=\(result.isFinal), chars=\(text.count), text=\"\(text)\"")
 
                     if result.isFinal {
