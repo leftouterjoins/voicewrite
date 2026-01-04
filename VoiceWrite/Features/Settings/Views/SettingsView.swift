@@ -19,7 +19,7 @@ struct SettingsView: View {
                     Label("Permissions", systemImage: "lock.shield")
                 }
         }
-        .frame(width: 400, height: 250)
+        .frame(width: 400, height: 300)
     }
 }
 
@@ -30,6 +30,7 @@ struct GeneralSettingsView: View {
     @AppStorage("customColorRed") private var customColorRed = 1.0
     @AppStorage("customColorGreen") private var customColorGreen = 0.3
     @AppStorage("customColorBlue") private var customColorBlue = 0.2
+    @AppStorage("enableEmoji") private var enableEmoji = false
 
     @State private var selectedColor: Color = .red
 
@@ -39,6 +40,9 @@ struct GeneralSettingsView: View {
                 .onChange(of: launchAtLogin) { _, newValue in
                     LaunchAtLoginManager.shared.setEnabled(newValue)
                 }
+
+            Toggle("Convert Speech to Emoji", isOn: $enableEmoji)
+                .help("Say 'heart' to type ❤️")
 
             Toggle("Show Border Visualization", isOn: $showBorderVisualization)
 

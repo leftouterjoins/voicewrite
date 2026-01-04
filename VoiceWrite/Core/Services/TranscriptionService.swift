@@ -5,7 +5,7 @@ import Speech
 @MainActor
 final class TranscriptionService: ObservableObject {
     private var analyzer: SpeechAnalyzer?
-    private var transcriber: SpeechTranscriber?
+    private var transcriber: DictationTranscriber?
     // nonisolated(unsafe) to allow access from audio processing thread
     private nonisolated(unsafe) var inputBuilder: AsyncStream<AnalyzerInput>.Continuation?
     private nonisolated(unsafe) var analyzerFormat: AVAudioFormat?
@@ -15,6 +15,8 @@ final class TranscriptionService: ObservableObject {
 
     // Cached locale for recreating transcriber each session
     private var configuredLocale: Locale?
+    // Emoji setting (read at setup, used during transcriber creation)
+    private nonisolated(unsafe) var enableEmoji: Bool = false
 
     @Published var isModelInstalled = false
     @Published var downloadProgress: Progress?
@@ -24,12 +26,15 @@ final class TranscriptionService: ObservableObject {
     func setupTranscriber(locale: Locale = .current) async throws {
         // Cache locale for recreating transcriber each session
         self.configuredLocale = locale
+        // Read emoji setting
+        self.enableEmoji = UserDefaults.standard.bool(forKey: "enableEmoji")
 
         // Create initial transcriber to get audio format and verify model
-        let transcriber = SpeechTranscriber(
+        let transcriber = DictationTranscriber(
             locale: locale,
-            transcriptionOptions: [],
-            reportingOptions: [.volatileResults, .fastResults],
+            contentHints: [],
+            transcriptionOptions: enableEmoji ? [.punctuation, .emoji] : [.punctuation],
+            reportingOptions: [.volatileResults],
             attributeOptions: []
         )
         self.transcriber = transcriber
@@ -50,7 +55,7 @@ final class TranscriptionService: ObservableObject {
 
     /// Pre-warmed analyzer ready for next session (created after finalize)
     private var warmedAnalyzer: SpeechAnalyzer?
-    private var warmedTranscriber: SpeechTranscriber?
+    private var warmedTranscriber: DictationTranscriber?
     private var warmedInputStream: AsyncStream<AnalyzerInput>?
     private var warmedInputBuilder: AsyncStream<AnalyzerInput>.Continuation?
 
@@ -78,10 +83,11 @@ final class TranscriptionService: ObservableObject {
             throw TranscriptionError.setupFailed("Transcriber not configured - call setupTranscriber first")
         }
 
-        let transcriber = SpeechTranscriber(
+        let transcriber = DictationTranscriber(
             locale: locale,
-            transcriptionOptions: [],
-            reportingOptions: [.volatileResults, .fastResults],
+            contentHints: [],
+            transcriptionOptions: enableEmoji ? [.punctuation, .emoji] : [.punctuation],
+            reportingOptions: [.volatileResults],
             attributeOptions: []
         )
         self.transcriber = transcriber
@@ -100,10 +106,11 @@ final class TranscriptionService: ObservableObject {
         guard let locale = configuredLocale else { return }
 
         print("[VoiceWrite] Pre-warming next analyzer")
-        let transcriber = SpeechTranscriber(
+        let transcriber = DictationTranscriber(
             locale: locale,
-            transcriptionOptions: [],
-            reportingOptions: [.volatileResults, .fastResults],
+            contentHints: [],
+            transcriptionOptions: enableEmoji ? [.punctuation, .emoji] : [.punctuation],
+            reportingOptions: [.volatileResults],
             attributeOptions: []
         )
         self.warmedTranscriber = transcriber
@@ -131,7 +138,7 @@ final class TranscriptionService: ObservableObject {
 
     func ensureModel(locale: Locale) async throws {
         // Check if locale is supported
-        let supportedLocales = await SpeechTranscriber.supportedLocales
+        let supportedLocales = await DictationTranscriber.supportedLocales
         print("[VoiceWrite] Supported locales: \(supportedLocales.map { $0.identifier })")
         print("[VoiceWrite] Requested locale: \(locale.identifier)")
 
@@ -292,7 +299,7 @@ final class TranscriptionService: ObservableObject {
         resultTask = nil
 
         // Clean up analyzer and transcriber - both must be recreated each session
-        // SpeechTranscriber cannot be reused after its analyzer is finalized
+        // DictationTranscriber cannot be reused after its analyzer is finalized
         analyzer = nil
         transcriber = nil
         audioConverter = nil

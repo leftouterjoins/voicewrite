@@ -49,20 +49,16 @@ struct MenuBarView: View {
             Divider()
 
             // Settings and Quit
-            Button {
-                openSettings()
-                NSApp.activate(ignoringOtherApps: true)
-            } label: {
-                Label("Settings...", systemImage: "gear")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
+            VStack(spacing: 2) {
+                MenuButton("Settings...", systemImage: "gear") {
+                    openSettings()
+                    NSApp.activate(ignoringOtherApps: true)
+                }
 
-            Button(action: { NSApplication.shared.terminate(nil) }) {
-                Label("Quit VoiceWrite", systemImage: "power")
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                MenuButton("Quit VoiceWrite", systemImage: "power") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
-            .buttonStyle(.plain)
         }
         .padding()
         .frame(width: 220)
@@ -99,3 +95,37 @@ struct MenuBarView: View {
         }
     }
 }
+
+// MARK: - Menu Button with Hover
+
+private struct MenuButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    init(_ title: String, systemImage: String, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 3)
+                .padding(.horizontal, 8)
+                .background(isHovered ? Color.accentColor : Color.clear)
+                .foregroundStyle(isHovered ? .white : .primary)
+                .cornerRadius(4)
+        }
+        .buttonStyle(.plain)
+        .focusEffectDisabled()
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
+}
+
