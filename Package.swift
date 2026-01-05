@@ -1,10 +1,10 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
     name: "VoiceWrite",
     platforms: [
-        .macOS(.v15)  // CI compatibility - actual minimum is macOS 26, enforced in Info.plist
+        .macOS(.v26)
     ],
     products: [
         .executable(name: "VoiceWrite", targets: ["VoiceWrite"])
