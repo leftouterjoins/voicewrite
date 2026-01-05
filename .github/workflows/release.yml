@@ -127,30 +127,14 @@ jobs:
           # Use ditto (not zip) to preserve symlinks and metadata
           ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
 
-      - name: Notarize DMG and ZIP
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: |
-          if [ -z "$APPLE_ID" ]; then echo "No Apple ID, skipping notarization"; exit 0; fi
-          # Notarize DMG
-          xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --wait
-          xcrun stapler staple "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
-
-          # Notarize ZIP (for Sparkle updates)
-          xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --wait
-          # Re-create ZIP after stapling the app
-          xcrun stapler staple "${APP_NAME}.app"
-          ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
+      # Notarization disabled - just signing for now
+      # - name: Notarize DMG and ZIP
+      #   env:
+      #     APPLE_ID: ${{ secrets.APPLE_ID }}
+      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      #     APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      #   run: |
+      #     ...notarization steps...
 
       - name: Sign update for Sparkle
         env:
