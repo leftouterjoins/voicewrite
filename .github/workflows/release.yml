@@ -81,25 +81,28 @@ jobs:
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
           echo "CODESIGN_IDENTITY=$IDENTITY" >> $GITHUB_ENV
 
-          # Sign Sparkle components (order matters - XPC services first)
-          codesign -f -s "$IDENTITY" -o runtime \
+          # Sign Sparkle components (order matters - XPC services first, with timestamp for notarization)
+          codesign -f -s "$IDENTITY" --timestamp -o runtime \
             "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
-          codesign -f -s "$IDENTITY" -o runtime --preserve-metadata=entitlements \
+          codesign -f -s "$IDENTITY" --timestamp -o runtime --preserve-metadata=entitlements \
             "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
-          codesign -f -s "$IDENTITY" -o runtime \
+          codesign -f -s "$IDENTITY" --timestamp -o runtime \
             "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
-          codesign -f -s "$IDENTITY" -o runtime \
+          codesign -f -s "$IDENTITY" --timestamp -o runtime \
             "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
-          codesign -f -s "$IDENTITY" -o runtime \
+          # Sign the Sparkle binary explicitly before signing the framework
+          codesign -f -s "$IDENTITY" --timestamp -o runtime \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/Sparkle"
+          codesign -f -s "$IDENTITY" --timestamp -o runtime \
             "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework"
 
           # Sign resource bundles
           for bundle in "${APP_NAME}.app/Contents/Resources/"*.bundle; do
-            [ -e "$bundle" ] && codesign -f -s "$IDENTITY" -o runtime "$bundle" || true
+            [ -e "$bundle" ] && codesign -f -s "$IDENTITY" --timestamp -o runtime "$bundle" || true
           done
 
           # Sign main app last (no --deep!)
-          codesign -f -s "$IDENTITY" -o runtime --entitlements VoiceWrite/VoiceWrite.entitlements "${APP_NAME}.app"
+          codesign -f -s "$IDENTITY" --timestamp -o runtime --entitlements VoiceWrite/VoiceWrite.entitlements "${APP_NAME}.app"
 
           # Verify signature
           codesign --verify --verbose "${APP_NAME}.app"
