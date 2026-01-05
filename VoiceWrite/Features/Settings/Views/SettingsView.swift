@@ -25,6 +25,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Updates", systemImage: "arrow.triangle.2.circlepath")
                 }
+
+            AboutSettingsView()
+                .tabItem {
+                    Label("About", systemImage: "info.circle")
+                }
         }
         .frame(width: 400, height: 300)
     }
@@ -158,5 +163,49 @@ struct UpdatesSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+}
+
+struct AboutSettingsView: View {
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+    }
+
+    private var buildNumber: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 64, height: 64)
+
+            Text("VoiceWrite")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            Text("Version \(appVersion) (\(buildNumber))")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Text("Voice-to-text for macOS")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Divider()
+                .padding(.horizontal, 40)
+
+            VStack(spacing: 8) {
+                Link("Website", destination: URL(string: "https://leftouterjoins.github.io/voicewrite/")!)
+                Link("GitHub", destination: URL(string: "https://github.com/leftouterjoins/voicewrite")!)
+                Link("Report an Issue", destination: URL(string: "https://github.com/leftouterjoins/voicewrite/issues")!)
+            }
+            .font(.subheadline)
+
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
