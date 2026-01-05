@@ -50,8 +50,8 @@ jobs:
           # Create PkgInfo
           echo "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
 
-          # Copy Sparkle framework
-          cp -R .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "${APP_BUNDLE}/Contents/Frameworks/"
+          # Copy Sparkle framework (use ditto to preserve symlinks and metadata)
+          ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework"
 
           # Copy resource bundles (KeyboardShortcuts)
           cp -r .build/arm64-apple-macosx/release/*.bundle "${APP_BUNDLE}/Contents/Resources/" 2>/dev/null || true
