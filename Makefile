@@ -1,9 +1,10 @@
-.PHONY: build release app run debug clean install uninstall notarize notarize-status notarize-log
+.PHONY: build release app run debug clean install uninstall notarize notarize-status notarize-log generate-keys sign-update
 
 APP_NAME := VoiceWrite
 BUILD_DIR := .build
 APP_BUNDLE := $(APP_NAME).app
 INSTALL_DIR := /Applications
+VERSION := 1.2.0
 # Development signing (for local testing)
 DEV_IDENTITY := Apple Development: support@pineridgeranch.net (Z42AQ7N7KX)
 # Distribution signing (for release)
@@ -11,6 +12,8 @@ DIST_IDENTITY := Developer ID Application: Pineridge Ranch Technologies LLC (4GB
 CODESIGN_IDENTITY := $(DIST_IDENTITY)
 ENTITLEMENTS := VoiceWrite/VoiceWrite.entitlements
 TEAM_ID := 4GB7LATCNU
+# Sparkle framework path (after swift build resolves it)
+SPARKLE_XCFRAMEWORK := $(BUILD_DIR)/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework
 
 # Debug build
 build:
@@ -32,28 +35,50 @@ app: release
 	@rm -rf $(APP_BUNDLE)
 	@mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	@mkdir -p $(APP_BUNDLE)/Contents/Resources
+	@mkdir -p $(APP_BUNDLE)/Contents/Frameworks
 	@cp $(BUILD_DIR)/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
+	@# Add rpath so the binary can find Sparkle.framework in Frameworks/
+	@install_name_tool -add_rpath @executable_path/../Frameworks $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
 	@cp VoiceWrite/Info.plist $(APP_BUNDLE)/Contents/
 	@echo "APPL????" > $(APP_BUNDLE)/Contents/PkgInfo
 	@# Copy SwiftPM resource bundles to Contents/Resources/ (patched accessor looks here)
 	@cp -r $(BUILD_DIR)/arm64-apple-macosx/release/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
 	@# Copy app icon to Resources
 	@cp VoiceWrite/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
-	@# Sign the app with --deep to sign all nested bundles
-	@codesign --force --deep --sign "$(CODESIGN_IDENTITY)" --options runtime --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
+	@# Copy Sparkle framework to Frameworks/
+	@cp -R $(SPARKLE_XCFRAMEWORK) $(APP_BUNDLE)/Contents/Frameworks/
+	@# Sign Sparkle components (order matters - XPC services first, never use --deep)
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime \
+		"$(APP_BUNDLE)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime --preserve-metadata=entitlements \
+		"$(APP_BUNDLE)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime \
+		"$(APP_BUNDLE)/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime \
+		"$(APP_BUNDLE)/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime \
+		"$(APP_BUNDLE)/Contents/Frameworks/Sparkle.framework"
+	@# Sign resource bundles (KeyboardShortcuts)
+	@for bundle in $(APP_BUNDLE)/Contents/Resources/*.bundle; do \
+		codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime "$$bundle" 2>/dev/null || true; \
+	done
+	@# Sign main app last
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
 
 # Create distribution zip and notarize
 notarize: app
 	@rm -f $(APP_NAME)-*.zip
-	@zip -r $(APP_NAME)-1.0.0.zip $(APP_BUNDLE)
+	@# Use ditto (not zip) to preserve symlinks and metadata - required for notarization
+	@ditto -c -k --keepParent $(APP_BUNDLE) $(APP_NAME)-notarize.zip
 	@echo "Submitting for notarization..."
-	@xcrun notarytool submit $(APP_NAME)-1.0.0.zip --keychain-profile "notarytool" --wait
+	@xcrun notarytool submit $(APP_NAME)-notarize.zip --keychain-profile "notarytool" --wait
 	@echo "Stapling notarization ticket..."
 	@xcrun stapler staple $(APP_BUNDLE)
-	@rm -f $(APP_NAME)-1.0.0.zip
-	@zip -r $(APP_NAME)-1.0.0.zip $(APP_BUNDLE)
-	@echo "Notarized $(APP_NAME)-1.0.0.zip ready for distribution"
+	@rm -f $(APP_NAME)-notarize.zip
+	@# Create final distribution archive
+	@ditto -c -k --keepParent $(APP_BUNDLE) $(APP_NAME)-$(VERSION).zip
+	@echo "Notarized $(APP_NAME)-$(VERSION).zip ready for distribution"
 
 # Check notarization status
 notarize-status:
@@ -87,6 +112,18 @@ clean:
 	swift package clean
 	rm -rf $(APP_BUNDLE)
 
+# Generate Sparkle EdDSA keys (one-time setup)
+generate-keys:
+	@echo "Generating Sparkle EdDSA keypair..."
+	@$(BUILD_DIR)/artifacts/sparkle/Sparkle/bin/generate_keys
+	@echo ""
+	@echo "IMPORTANT: Copy the public key above to Info.plist (SUPublicEDKey)"
+	@echo "The private key is stored in your Keychain - BACK IT UP!"
+
+# Sign an update archive for Sparkle (usage: make sign-update FILE=VoiceWrite-1.2.0.zip)
+sign-update:
+	@$(BUILD_DIR)/artifacts/sparkle/Sparkle/bin/sign_update $(FILE)
+
 # Show help
 help:
 	@echo "VoiceWrite Build System"
@@ -94,8 +131,8 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build     - Debug build"
-	@echo "  release   - Release build"
+	@echo "  build            - Debug build"
+	@echo "  release          - Release build"
 	@echo "  app              - Create signed VoiceWrite.app bundle"
 	@echo "  notarize         - Submit for notarization and wait"
 	@echo "  notarize-status  - Check notarization history"
@@ -105,6 +142,8 @@ help:
 	@echo "  install          - Install to /Applications"
 	@echo "  uninstall        - Remove from /Applications"
 	@echo "  clean            - Clean build artifacts"
+	@echo "  generate-keys    - Generate Sparkle EdDSA keypair (one-time)"
+	@echo "  sign-update      - Sign update archive (FILE=xxx.zip)"
 	@echo "  help             - Show this help"
 	@echo ""
 	@echo "Note: Uses macOS SpeechAnalyzer API (requires macOS 26+)"

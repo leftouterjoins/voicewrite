@@ -2,6 +2,8 @@ import SwiftUI
 import KeyboardShortcuts
 
 struct SettingsView: View {
+    @EnvironmentObject var updaterManager: UpdaterManager
+
     var body: some View {
         TabView {
             GeneralSettingsView()
@@ -17,6 +19,11 @@ struct SettingsView: View {
             PermissionsSettingsView()
                 .tabItem {
                     Label("Permissions", systemImage: "lock.shield")
+                }
+
+            UpdatesSettingsView()
+                .tabItem {
+                    Label("Updates", systemImage: "arrow.triangle.2.circlepath")
                 }
         }
         .frame(width: 400, height: 300)
@@ -126,5 +133,30 @@ struct PermissionsSettingsView: View {
     private func checkPermissions() {
         hasMicPermission = PermissionManager.shared.hasMicrophonePermission
         hasAccessibilityPermission = PermissionManager.shared.hasAccessibilityPermission
+    }
+}
+
+struct UpdatesSettingsView: View {
+    @EnvironmentObject var updaterManager: UpdaterManager
+    @AppStorage("SUAutomaticallyUpdate") private var autoUpdate = true
+
+    var body: some View {
+        Form {
+            Toggle("Automatically download and install updates", isOn: $autoUpdate)
+                .onChange(of: autoUpdate) { _, newValue in
+                    updaterManager.automaticallyChecksForUpdates = newValue
+                }
+
+            Text("Updates install silently and take effect next time you open VoiceWrite.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button("Check for Updates Now") {
+                updaterManager.checkForUpdates()
+            }
+            .disabled(!updaterManager.canCheckForUpdates)
+        }
+        .formStyle(.grouped)
+        .padding()
     }
 }

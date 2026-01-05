@@ -11,12 +11,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts.git", from: "2.0.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.0.0"),
     ],
     targets: [
         .executableTarget(
             name: "VoiceWrite",
             dependencies: [
                 "KeyboardShortcuts",
+                "Sparkle",
             ],
             path: "VoiceWrite",
             exclude: ["Info.plist", "VoiceWrite.entitlements"]

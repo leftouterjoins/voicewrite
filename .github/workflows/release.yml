@@ -11,6 +11,8 @@ env:
 jobs:
   build-and-release:
     runs-on: macos-15
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -31,9 +33,13 @@ jobs:
           APP_BUNDLE="${APP_NAME}.app"
           mkdir -p "${APP_BUNDLE}/Contents/MacOS"
           mkdir -p "${APP_BUNDLE}/Contents/Resources"
+          mkdir -p "${APP_BUNDLE}/Contents/Frameworks"
 
           # Copy binary
           cp .build/release/${APP_NAME} "${APP_BUNDLE}/Contents/MacOS/"
+
+          # Add rpath so binary can find Sparkle.framework
+          install_name_tool -add_rpath @executable_path/../Frameworks "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 
           # Copy Info.plist
           cp VoiceWrite/Info.plist "${APP_BUNDLE}/Contents/"
@@ -43,6 +49,15 @@ jobs:
 
           # Create PkgInfo
           echo "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
+
+          # Copy Sparkle framework
+          cp -R .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "${APP_BUNDLE}/Contents/Frameworks/"
+
+          # Copy resource bundles (KeyboardShortcuts)
+          cp -r .build/arm64-apple-macosx/release/*.bundle "${APP_BUNDLE}/Contents/Resources/" 2>/dev/null || true
+
+          # Copy app icon
+          cp VoiceWrite/AppIcon.icns "${APP_BUNDLE}/Contents/Resources/" || true
 
       - name: Import signing certificate
         if: env.CERTIFICATE_BASE64 != ''
@@ -64,9 +79,27 @@ jobs:
 
           # Find signing identity
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          echo "CODESIGN_IDENTITY=$IDENTITY" >> $GITHUB_ENV
 
-          # Sign the app
-          codesign --force --deep --options runtime --sign "$IDENTITY" --entitlements VoiceWrite/VoiceWrite.entitlements "${APP_NAME}.app"
+          # Sign Sparkle components (order matters - XPC services first)
+          codesign -f -s "$IDENTITY" -o runtime \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+          codesign -f -s "$IDENTITY" -o runtime --preserve-metadata=entitlements \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+          codesign -f -s "$IDENTITY" -o runtime \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
+          codesign -f -s "$IDENTITY" -o runtime \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
+          codesign -f -s "$IDENTITY" -o runtime \
+            "${APP_NAME}.app/Contents/Frameworks/Sparkle.framework"
+
+          # Sign resource bundles
+          for bundle in "${APP_NAME}.app/Contents/Resources/"*.bundle; do
+            [ -e "$bundle" ] && codesign -f -s "$IDENTITY" -o runtime "$bundle" || true
+          done
+
+          # Sign main app last (no --deep!)
+          codesign -f -s "$IDENTITY" -o runtime --entitlements VoiceWrite/VoiceWrite.entitlements "${APP_NAME}.app"
 
           # Verify signature
           codesign --verify --verbose "${APP_NAME}.app"
@@ -84,26 +117,105 @@ jobs:
             -ov -format UDZO \
             "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
 
-      - name: Notarize DMG
+      - name: Create ZIP for Sparkle
+        run: |
+          # Use ditto (not zip) to preserve symlinks and metadata
+          ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
+
+      - name: Notarize DMG and ZIP
         if: env.APPLE_ID != ''
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
+          # Notarize DMG
           xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --wait
-
           xcrun stapler staple "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
+
+          # Notarize ZIP (for Sparkle updates)
+          xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait
+          # Re-create ZIP after stapling the app
+          xcrun stapler staple "${APP_NAME}.app"
+          ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
+
+      - name: Sign update for Sparkle
+        if: env.SPARKLE_PRIVATE_KEY != ''
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Save private key to temp file
+          echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_key
+          chmod 600 /tmp/sparkle_key
+
+          # Sign the update and capture signature
+          SIGNATURE=$(.build/artifacts/sparkle/Sparkle/bin/sign_update \
+            "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip" \
+            --ed-key-file /tmp/sparkle_key | grep "sparkle:edSignature" | sed 's/.*sparkle:edSignature="\([^"]*\)".*/\1/')
+
+          echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+
+          # Get file size
+          FILE_SIZE=$(stat -f%z "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip")
+          echo "FILE_SIZE=$FILE_SIZE" >> $GITHUB_ENV
+
+          # Clean up
+          rm /tmp/sparkle_key
+
+      - name: Update appcast.xml
+        if: env.SPARKLE_SIGNATURE != ''
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          SIGNATURE="${{ env.SPARKLE_SIGNATURE }}"
+          FILE_SIZE="${{ env.FILE_SIZE }}"
+          PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
+
+          # Create new item entry
+          NEW_ITEM=$(cat <<EOF
+    <item>
+      <title>Version ${VERSION}</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v${VERSION}</link>
+      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <pubDate>${PUB_DATE}</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v${VERSION}/${APP_NAME}-${VERSION}.zip"
+        sparkle:edSignature="${SIGNATURE}"
+        length="${FILE_SIZE}"
+        type="application/octet-stream" />
+    </item>
+EOF
+          )
+
+          # Insert new item after <language>en</language> line
+          sed -i '' "/<language>en<\/language>/a\\
+${NEW_ITEM}
+" docs/appcast.xml
+
+      - name: Commit appcast changes
+        if: env.SPARKLE_SIGNATURE != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/appcast.xml
+          git commit -m "Update appcast for v${{ steps.version.outputs.VERSION }}"
+          git push origin HEAD:main
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.APP_NAME }}-${{ steps.version.outputs.VERSION }}.dmg
+            ${{ env.APP_NAME }}-${{ steps.version.outputs.VERSION }}.zip
           body: |
             ## VoiceWrite ${{ steps.version.outputs.VERSION }}
 
@@ -113,6 +225,9 @@ jobs:
             1. Download the DMG below
             2. Open it and drag VoiceWrite to Applications
             3. Launch VoiceWrite from Applications
+
+            ### Automatic Updates
+            Existing users will receive this update automatically.
 
             ### Requirements
             - macOS 26.0 (Tahoe) or later

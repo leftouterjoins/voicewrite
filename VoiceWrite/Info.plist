@@ -41,5 +41,22 @@
     <!-- Supports automatic graphics switching -->
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+
+    <!-- Sparkle Update Configuration -->
+    <key>SUFeedURL</key>
+    <string>https://leftouterjoins.github.io/voicewrite/appcast.xml</string>
+
+    <key>SUPublicEDKey</key>
+    <string>CUlfTMJ+QAiruV6RsNikqThAZDiIFQOEixwN+V3J7xI=</string>
+
+    <!-- Silent auto-update (downloads in background, installs on restart) -->
+    <key>SUAutomaticallyUpdate</key>
+    <true/>
+
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
 </dict>
 </plist>
