@@ -60,12 +60,12 @@ jobs:
           cp VoiceWrite/AppIcon.icns "${APP_BUNDLE}/Contents/Resources/" || true
 
       - name: Import signing certificate
-        if: ${{ secrets.CERTIFICATE_BASE64 != '' }}
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          if [ -z "$CERTIFICATE_BASE64" ]; then echo "No certificate, skipping"; exit 0; fi
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
@@ -123,12 +123,12 @@ jobs:
           ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
 
       - name: Notarize DMG and ZIP
-        if: ${{ secrets.APPLE_ID != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
+          if [ -z "$APPLE_ID" ]; then echo "No Apple ID, skipping notarization"; exit 0; fi
           # Notarize DMG
           xcrun notarytool submit "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg" \
             --apple-id "$APPLE_ID" \
@@ -148,10 +148,10 @@ jobs:
           ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
 
       - name: Sign update for Sparkle
-        if: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then echo "No Sparkle key, skipping"; exit 0; fi
           # Save private key to temp file
           echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_key
           chmod 600 /tmp/sparkle_key
