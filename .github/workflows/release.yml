@@ -172,52 +172,31 @@ jobs:
 
       - name: Update appcast.xml
         if: ${{ env.SPARKLE_SIGNATURE != '' }}
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          SIGNATURE="${SPARKLE_SIGNATURE}"
-          FILE_SIZE="${FILE_SIZE}"
           PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
 
-          # Create new item entry using python for reliable XML insertion
-          python3 << 'PYEOF'
-          import re
-          version = "${{ steps.version.outputs.VERSION }}"
-          signature = "${SPARKLE_SIGNATURE}"
-          file_size = "${FILE_SIZE}"
-          pub_date = """${PUB_DATE}"""
-          app_name = "VoiceWrite"
-
-          # Read the signature and file_size from environment (shell expanded)
-          import os
-          signature = os.environ.get('SPARKLE_SIGNATURE', '')
-          file_size = os.environ.get('FILE_SIZE', '')
-
-          new_item = f'''
+          # Create the new item XML
+          cat > /tmp/new_item.xml << XMLEOF
     <item>
-      <title>Version {version}</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v{version}</link>
-      <sparkle:version>{version}</sparkle:version>
-      <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
+      <title>Version ${VERSION}</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v${VERSION}</link>
+      <sparkle:version>${VERSION}</sparkle:version>
+      <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <pubDate>{pub_date}</pubDate>
+      <pubDate>${PUB_DATE}</pubDate>
       <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v{version}/{app_name}-{version}.zip"
-        sparkle:edSignature="{signature}"
-        length="{file_size}"
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v${VERSION}/${APP_NAME}-${VERSION}.zip"
+        sparkle:edSignature="${SPARKLE_SIGNATURE}"
+        length="${FILE_SIZE}"
         type="application/octet-stream" />
-    </item>'''
+    </item>
+          XMLEOF
 
-          with open('docs/appcast.xml', 'r') as f:
-              content = f.read()
-
-          content = content.replace('<language>en</language>', f'<language>en</language>{new_item}')
-
-          with open('docs/appcast.xml', 'w') as f:
-              f.write(content)
-          PYEOF
-        env:
-          SPARKLE_SIGNATURE: ${{ env.SPARKLE_SIGNATURE }}
-          FILE_SIZE: ${{ env.FILE_SIZE }}
+          # Insert after <language>en</language> using awk
+          awk '/<language>en<\/language>/{print; while((getline line < "/tmp/new_item.xml") > 0) print line; next}1' docs/appcast.xml > /tmp/appcast_new.xml
+          mv /tmp/appcast_new.xml docs/appcast.xml
 
       - name: Commit appcast changes
         if: ${{ env.SPARKLE_SIGNATURE != '' }}
