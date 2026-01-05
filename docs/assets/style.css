@@ -378,6 +378,44 @@ header .back-link:hover {
     font-size: 0.9rem;
 }
 
+/* FAQ Section */
+.faq {
+    padding: 80px 0;
+}
+
+.faq h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 48px;
+}
+
+.faq-list {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.faq-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.faq-item h3 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+.faq-item p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
 /* Download Section */
 .download {
     padding: 80px 0;
