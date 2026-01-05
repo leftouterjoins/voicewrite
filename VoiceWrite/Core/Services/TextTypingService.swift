@@ -1,290 +1,281 @@
-import ApplicationServices
-import AppKit
 import Foundation
 import CoreGraphics
 
-/// Commands for the typing queue
-enum TypeCommand: Sendable {
-    case volatile(String)   // Update volatile text with tail-replace
-    case final(String)      // Replace volatile with final, then type
-    case reset              // Clear state without typing
+/// Commands that can be sent to the typing service
+enum TypeCommand {
+    case volatile(String)  // Update volatile text (deletes previous, types new)
+    case final(String)     // Finalize text (deletes volatile, types final)
+    case reset             // Clear volatile state without typing
 }
 
+/// Typing service using emacs-style line editing commands for text manipulation.
+/// All operations are strictly sequential via actor isolation.
 actor TextTypingService {
-    private let cgEventInserter = CGEventTextInserter()
 
-    // Session state
-    private var state: TypingSessionState?
+    // MARK: - Key Codes
 
-    // Stream consumer for sequential command processing
+    private static let keyCodeControl: CGKeyCode = 0x3B  // 59
+    private static let keyCodeA: CGKeyCode = 0x00        // 0
+    private static let keyCodeK: CGKeyCode = 0x28        // 40
+    private static let keyCodeBackspace: CGKeyCode = 0x33 // 51
+
+    // MARK: - State
+
+    private var currentVolatileText: String = ""
     private var consumerTask: Task<Void, Never>?
+
+    // Coalescing: store latest command, signal when new one arrives
+    private var latestCommand: TypeCommand?
+    private var commandSignal: AsyncStream<Void>.Continuation?
+
+    // Ensure only one edit runs at a time
+    private var isProcessing: Bool = false
+
+    // Consistent event source for all events
+    private let eventSource = CGEventSource(stateID: .privateState)
+
+    // MARK: - Delays
+
+    /// Small delay between CGEvents within a combo (ensures proper sequencing)
+    private func microDelay() async {
+        try? await Task.sleep(for: .milliseconds(10))
+    }
+
+    /// Delay between typing actions (10ms - fast typing)
+    private func actionDelay() async {
+        try? await Task.sleep(for: .milliseconds(10))
+    }
+
+    // MARK: - CGEvent Helpers
+
+    /// Send a control key combination as 4 separate events posted ATOMICALLY
+    /// (no await points during the sequence to prevent interleaving).
+    /// Uses a consistent event source and posts all events before any delay.
+    private func sendControlKey(_ keyCode: CGKeyCode) async {
+        // Isolation delay before - ensure previous events fully processed
+        try? await Task.sleep(for: .milliseconds(40))
+
+        // POST ALL 4 EVENTS ATOMICALLY - NO AWAITS BETWEEN THEM
+
+        // 1. Ctrl down
+        let ctrlDown = CGEvent(keyboardEventSource: eventSource, virtualKey: Self.keyCodeControl, keyDown: true)
+        ctrlDown?.flags = .maskControl
+        ctrlDown?.post(tap: .cghidEventTap)
+
+        // 2. Key down with control flag
+        let keyDown = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: true)
+        keyDown?.flags = .maskControl
+        keyDown?.post(tap: .cghidEventTap)
+
+        // 3. Key up with control flag
+        let keyUp = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: false)
+        keyUp?.flags = .maskControl
+        keyUp?.post(tap: .cghidEventTap)
+
+        // 4. Ctrl up - explicitly clear flags
+        let ctrlUp = CGEvent(keyboardEventSource: eventSource, virtualKey: Self.keyCodeControl, keyDown: false)
+        ctrlUp?.flags = []
+        ctrlUp?.post(tap: .cghidEventTap)
+
+        // Isolation delay after - ensure ctrl is fully released before next action
+        try? await Task.sleep(for: .milliseconds(40))
+    }
+
+    /// Send Ctrl-A (move cursor to beginning of line)
+    private func sendCtrlA() async {
+        await sendControlKey(Self.keyCodeA)
+    }
+
+    /// Send Ctrl-K (kill from cursor to end of line)
+    private func sendCtrlK() async {
+        await sendControlKey(Self.keyCodeK)
+    }
+
+    /// Send a single backspace
+    private func sendBackspace() async {
+        let keyDown = CGEvent(keyboardEventSource: eventSource, virtualKey: Self.keyCodeBackspace, keyDown: true)
+        keyDown?.flags = []  // Explicitly no modifiers
+        keyDown?.post(tap: .cghidEventTap)
+        await microDelay()
+
+        let keyUp = CGEvent(keyboardEventSource: eventSource, virtualKey: Self.keyCodeBackspace, keyDown: false)
+        keyUp?.flags = []  // Explicitly no modifiers
+        keyUp?.post(tap: .cghidEventTap)
+        await actionDelay()
+    }
+
+    /// Type a single character using CGEvent
+    private func typeCharacter(_ char: Character) async {
+        let keyDown = CGEvent(keyboardEventSource: eventSource, virtualKey: 0, keyDown: true)
+        let keyUp = CGEvent(keyboardEventSource: eventSource, virtualKey: 0, keyDown: false)
+
+        // Explicitly no modifiers on character events
+        keyDown?.flags = []
+        keyUp?.flags = []
+
+        // Use keyboardSetUnicodeString to handle any Unicode character
+        var unicodeChars = Array(String(char).utf16)
+        keyDown?.keyboardSetUnicodeString(stringLength: unicodeChars.count, unicodeString: &unicodeChars)
+        keyUp?.keyboardSetUnicodeString(stringLength: unicodeChars.count, unicodeString: &unicodeChars)
+
+        keyDown?.post(tap: .cghidEventTap)
+        await microDelay()
+
+        keyUp?.post(tap: .cghidEventTap)
+        await actionDelay()
+    }
+
+    // MARK: - Core Operations
+
+    /// Delete the current volatile text using emacs-style commands.
+    /// Algorithm for multi-line text (cursor at end):
+    /// For each line from bottom to top:
+    ///   1. Ctrl-A (go to beginning of line)
+    ///   2. Ctrl-K (kill to end of line)
+    ///   3. If not first line: Backspace (delete newline)
+    private func deleteVolatileText() async {
+        guard !currentVolatileText.isEmpty else { return }
+
+        let lines = currentVolatileText.components(separatedBy: "\n")
+
+        // Process lines from bottom to top
+        for i in (0..<lines.count).reversed() {
+            // Go to beginning of current line
+            await sendCtrlA()
+
+            // Kill from cursor to end of line
+            await sendCtrlK()
+
+            // If not the first line, delete the newline character
+            if i > 0 {
+                await sendBackspace()
+            }
+        }
+    }
+
+    /// Type the given text character by character
+    private func typeText(_ text: String) async {
+        for char in text {
+            await typeCharacter(char)
+        }
+    }
+
+    /// Execute a command (delete old text, type new text)
+    /// Ensures only one command runs at a time
+    private func executeCommand(_ command: TypeCommand) async {
+        // Wait if another command is processing
+        while isProcessing {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+
+        isProcessing = true
+        defer { isProcessing = false }
+
+        switch command {
+        case .volatile(let text):
+            // Skip if text unchanged
+            guard text != currentVolatileText else { return }
+            await deleteVolatileText()
+            await typeText(text)
+            currentVolatileText = text
+
+        case .final(let text):
+            // Skip if final matches what's already typed
+            guard text != currentVolatileText else {
+                currentVolatileText = ""
+                return
+            }
+            await deleteVolatileText()
+            await typeText(text)
+            currentVolatileText = ""
+
+        case .reset:
+            // Don't delete text on reset - just clear tracking state
+            // This preserves whatever was typed when session ends
+            currentVolatileText = ""
+        }
+    }
+
+    /// Queue a command (coalesces - only latest is kept, final takes priority)
+    private func queueCommand(_ command: TypeCommand) {
+        // Final always takes priority over volatile
+        if case .final = command {
+            latestCommand = command
+        } else if case .final = latestCommand {
+            // Don't overwrite a pending final with a volatile
+        } else {
+            latestCommand = command
+        }
+        // Signal that there's work
+        commandSignal?.yield()
+    }
+
+    /// Take the latest command (clears it)
+    private func takeCommand() -> TypeCommand? {
+        let cmd = latestCommand
+        latestCommand = nil
+        return cmd
+    }
 
     // MARK: - Session Management
 
-    /// Start a typing session - returns continuation for sending commands
+    /// Start a typing session. Returns a continuation for sending commands.
     func startSession() -> AsyncStream<TypeCommand>.Continuation {
-        // Cancel any existing session
-        consumerTask?.cancel()
-        consumerTask = nil
+        // Reset state
+        currentVolatileText = ""
+        latestCommand = nil
 
-        // Capture session context (focused element, determine insertion mode)
-        state = captureSessionContext()
+        // Create signal stream for waking up the processor
+        let signalStream = AsyncStream<Void> { cont in
+            commandSignal = cont
+        }
 
-        let (stream, continuation) = AsyncStream<TypeCommand>.makeStream()
+        // Create command stream (caller sends commands here)
+        var commandContinuation: AsyncStream<TypeCommand>.Continuation!
+        let commandStream = AsyncStream<TypeCommand> { cont in
+            commandContinuation = cont
+        }
 
-        consumerTask = Task { [weak self] in
-            for await command in stream {
-                guard let self = self, !Task.isCancelled else { break }
-                await self.processCommand(command)
+        // Task to receive commands and queue them
+        Task {
+            for await command in commandStream {
+                queueCommand(command)
             }
         }
 
-        return continuation
+        // Start consumer task that processes commands with coalescing
+        consumerTask = Task {
+            for await _ in signalStream {
+                guard !Task.isCancelled else { break }
+                // Process latest command, then check for more
+                while let command = takeCommand() {
+                    await executeCommand(command)
+                }
+            }
+        }
+
+        return commandContinuation
     }
 
-    /// End the typing session - waits for pending commands to complete
+    /// End the typing session and wait for all commands to complete
     func endSession() async {
-        if let task = consumerTask {
-            await task.value
+        // FIRST wait for any in-progress command to fully complete
+        // This ensures current typing finishes before we stop
+        while isProcessing {
+            try? await Task.sleep(for: .milliseconds(10))
         }
+
+        // NOW clear pending commands - don't process any more
+        latestCommand = nil
+        commandSignal?.finish()
+        commandSignal = nil
+
+        // Wait for consumer task to exit
+        await consumerTask?.value
         consumerTask = nil
-        state = nil
-    }
 
-    // MARK: - Session Context
-
-    private func captureSessionContext() -> TypingSessionState {
-        // Check if accessibility is trusted
-        guard AXIsProcessTrusted() else {
-            print("[VoiceWrite] Accessibility not trusted - using clipboard fallback")
-            return TypingSessionState(mode: .clipboardOnly)
-        }
-
-        // Try to get focused element
-        do {
-            let element = try AXUIElement.focusedElement()
-
-            // Check if element supports text editing
-            guard element.supportsTextEditing else {
-                print("[VoiceWrite] Focused element doesn't support text editing - using CGEvent")
-                return TypingSessionState(mode: .cgEvent)
-            }
-
-            print("[VoiceWrite] Using accessibility API for text insertion")
-            return TypingSessionState(mode: .accessibility(element))
-
-        } catch {
-            print("[VoiceWrite] Failed to get focused element: \(error) - using CGEvent")
-            return TypingSessionState(mode: .cgEvent)
-        }
-    }
-
-    // MARK: - Command Processing
-
-    private func processCommand(_ command: TypeCommand) async {
-        guard var currentState = state else { return }
-
-        switch command {
-        case .volatile(let newText):
-            await processVolatile(newText, state: &currentState)
-
-        case .final(let text):
-            await processFinal(text, state: &currentState)
-
-        case .reset:
-            print("[VoiceWrite] Reset - clearing state")
-            currentState.resetVolatile()
-        }
-
-        state = currentState
-    }
-
-    // MARK: - Volatile Text Processing
-
-    private func processVolatile(_ newText: String, state: inout TypingSessionState) async {
-        switch state.mode {
-        case .accessibility(let element):
-            await processVolatileWithAX(newText, element: element, state: &state)
-
-        case .cgEvent:
-            await processVolatileWithCGEvent(newText, state: &state)
-
-        case .clipboardOnly:
-            // Just track the text, copy to clipboard on final
-            state.volatileText = newText
-        }
-    }
-
-    private func processVolatileWithAX(_ newText: String, element: AXUIElement, state: inout TypingSessionState) async {
-        do {
-            // Validate element is still valid
-            guard element.isValid else {
-                print("[VoiceWrite] Element invalidated - falling back to CGEvent")
-                state.mode = .cgEvent
-                await processVolatileWithCGEvent(newText, state: &state)
-                return
-            }
-
-            if state.volatileStartPosition == nil {
-                // First volatile text - capture current cursor position
-                let cursorPos = try element.getCursorPosition()
-                state.volatileStartPosition = cursorPos
-                print("[VoiceWrite] Starting volatile at position \(cursorPos)")
-
-                // Insert the text at cursor
-                try element.setSelectedText(newText)
-                state.volatileText = newText
-
-            } else {
-                // Update existing volatile text - select and replace
-                let volatileStart = state.volatileStartPosition!
-                let currentPos = try element.getCursorPosition()
-                let volatileLength = currentPos - volatileStart
-
-                print("[VoiceWrite] Updating volatile: replacing \(volatileLength) chars with '\(newText)'")
-
-                // Select the volatile text range
-                let range = CFRange(location: volatileStart, length: volatileLength)
-                try element.setSelectedTextRange(range)
-
-                // Replace with new text
-                try element.setSelectedText(newText)
-                state.volatileText = newText
-            }
-
-        } catch {
-            print("[VoiceWrite] AX volatile failed: \(error)")
-
-            if let axError = error as? AXTextEditingError, axError.shouldFallback {
-                print("[VoiceWrite] Falling back to CGEvent")
-                state.mode = .cgEvent
-                await processVolatileWithCGEvent(newText, state: &state)
-            }
-        }
-    }
-
-    private func processVolatileWithCGEvent(_ newText: String, state: inout TypingSessionState) async {
-        let oldText = state.lastTypedText
-
-        // Find common prefix
-        let commonLen = commonPrefixLength(oldText, newText)
-        let deleteCount = oldText.count - commonLen
-        let newSuffix = String(newText.dropFirst(commonLen))
-
-        print("[VoiceWrite] CGEvent volatile diff: delete \(deleteCount), type \(newSuffix.count)")
-
-        // Send backspaces for old suffix
-        if deleteCount > 0 {
-            await cgEventInserter.sendBackspaces(count: deleteCount)
-        }
-
-        // Type new suffix
-        if !newSuffix.isEmpty {
-            await cgEventInserter.insertText(newSuffix)
-        }
-
-        state.lastTypedText = newText
-        state.volatileText = newText
-    }
-
-    // MARK: - Final Text Processing
-
-    private func processFinal(_ text: String, state: inout TypingSessionState) async {
-        switch state.mode {
-        case .accessibility(let element):
-            await processFinalWithAX(text, element: element, state: &state)
-
-        case .cgEvent:
-            await processFinalWithCGEvent(text, state: &state)
-
-        case .clipboardOnly:
-            // Copy to clipboard
-            copyToClipboard(text)
-            print("[VoiceWrite] Copied final text to clipboard (\(text.count) chars)")
-            state.resetVolatile()
-        }
-    }
-
-    private func processFinalWithAX(_ text: String, element: AXUIElement, state: inout TypingSessionState) async {
-        // If final matches what's already typed, just clear state
-        if text == state.volatileText {
-            print("[VoiceWrite] Final matches volatile, keeping as-is")
-            state.resetVolatile()
-            return
-        }
-
-        do {
-            guard element.isValid else {
-                print("[VoiceWrite] Element invalidated - falling back to CGEvent for final")
-                state.mode = .cgEvent
-                await processFinalWithCGEvent(text, state: &state)
-                return
-            }
-
-            if state.volatileStartPosition != nil {
-                // Replace volatile text with final
-                let volatileStart = state.volatileStartPosition!
-                let currentPos = try element.getCursorPosition()
-                let volatileLength = currentPos - volatileStart
-
-                print("[VoiceWrite] Replacing \(volatileLength) volatile chars with final")
-
-                let range = CFRange(location: volatileStart, length: volatileLength)
-                try element.setSelectedTextRange(range)
-                try element.setSelectedText(text)
-
-            } else {
-                // No volatile - just insert at cursor
-                try element.setSelectedText(text)
-            }
-
-            state.resetVolatile()
-
-        } catch {
-            print("[VoiceWrite] AX final failed: \(error)")
-            if let axError = error as? AXTextEditingError, axError.shouldFallback {
-                state.mode = .cgEvent
-                await processFinalWithCGEvent(text, state: &state)
-            }
-        }
-    }
-
-    private func processFinalWithCGEvent(_ text: String, state: inout TypingSessionState) async {
-        // If final matches what we already typed, just keep it
-        if text == state.lastTypedText {
-            print("[VoiceWrite] Final matches volatile, keeping as-is")
-            state.resetVolatile()
-            return
-        }
-
-        // Delete any volatile text first
-        if !state.lastTypedText.isEmpty {
-            print("[VoiceWrite] Clearing \(state.lastTypedText.count) volatile chars before final")
-            await cgEventInserter.sendBackspaces(count: state.lastTypedText.count)
-        }
-
-        // Type final text
-        await cgEventInserter.insertText(text)
-        state.resetVolatile()
-    }
-
-    // MARK: - Clipboard Fallback
-
-    private func copyToClipboard(_ text: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-    }
-
-    // MARK: - Utility
-
-    private func commonPrefixLength(_ a: String, _ b: String) -> Int {
-        let aChars = Array(a)
-        let bChars = Array(b)
-        var i = 0
-        while i < aChars.count && i < bChars.count && aChars[i] == bChars[i] {
-            i += 1
-        }
-        return i
+        // Clear state but DON'T delete typed text - leave it on screen
+        currentVolatileText = ""
+        isProcessing = false
     }
 }
