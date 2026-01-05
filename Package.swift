@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "VoiceWrite",
     platforms: [
-        .macOS(.v26)
+        .macOS(.v15)  // CI compatibility - actual minimum is macOS 26, enforced in Info.plist
     ],
     products: [
         .executable(name: "VoiceWrite", targets: ["VoiceWrite"])
