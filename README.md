@@ -13,8 +13,8 @@
   <a href="#requirements">Requirements</a> •
   <a href="#installation">Installation</a> •
   <a href="#usage">Usage</a> •
-  <a href="#building">Building</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="#faq">FAQ</a> •
+  <a href="#building">Building</a>
 </p>
 
 <p align="center">
@@ -111,6 +111,29 @@ make run
 # Clean build artifacts
 make clean
 ```
+
+## FAQ
+
+**How is VoiceWrite different from other dictation apps?**
+
+VoiceWrite is designed for quick, single-line input — not long-form dictation. It's ideal for:
+- Filling in form fields
+- Writing quick messages
+- Search queries
+- Short notes
+- Vibe coding
+
+If you need to dictate paragraphs or documents, use macOS's built-in Dictation or a dedicated transcription app.
+
+**Why does text get retyped as I speak?**
+
+VoiceWrite shows real-time results by deleting and retyping text as the transcription updates. This works best for short phrases. For longer input, pause briefly to let the transcription stabilize.
+
+**Does it work in Terminal?**
+
+Yes! VoiceWrite uses standard macOS keyboard shortcuts (Ctrl-A, Ctrl-K) that work in Terminal, text editors, and virtually any app.
+
+---
 
 ## Privacy
 
