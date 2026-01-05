@@ -53,8 +53,10 @@ jobs:
           # Copy Sparkle framework (use ditto to preserve symlinks and metadata)
           ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "${APP_BUNDLE}/Contents/Frameworks/Sparkle.framework"
 
-          # Copy resource bundles (KeyboardShortcuts)
-          cp -r .build/arm64-apple-macosx/release/*.bundle "${APP_BUNDLE}/Contents/Resources/" 2>/dev/null || true
+          # Copy resource bundles (KeyboardShortcuts) - use ditto to preserve metadata
+          for bundle in .build/arm64-apple-macosx/release/*.bundle; do
+            [ -e "$bundle" ] && ditto "$bundle" "${APP_BUNDLE}/Contents/Resources/$(basename $bundle)" || true
+          done
 
           # Copy app icon
           cp VoiceWrite/AppIcon.icns "${APP_BUNDLE}/Contents/Resources/" || true
@@ -109,9 +111,9 @@ jobs:
 
       - name: Create DMG
         run: |
-          # Create DMG folder structure
+          # Create DMG folder structure (use ditto to preserve signatures)
           mkdir -p dmg_contents
-          cp -r "${APP_NAME}.app" dmg_contents/
+          ditto "${APP_NAME}.app" "dmg_contents/${APP_NAME}.app"
           ln -s /Applications dmg_contents/Applications
 
           # Create DMG
