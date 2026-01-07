@@ -8,6 +8,19 @@
     <description>Most recent updates to VoiceWrite</description>
     <language>en</language>
     <item>
+      <title>Version 1.2.2</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.2</link>
+      <sparkle:version>1.2.2</sparkle:version>
+      <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <pubDate>Wed, 07 Jan 2026 21:34:41 +0000</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.2.2/VoiceWrite-1.2.2.zip"
+        sparkle:edSignature="+xUp3E82eVhpm5Ig+G3ft6TCT6r31iFb6PJ2DlGDkzJIpe09yqmwJlJHu0pzfuimZvz3JLNR6Yv07OFWc86dAA=="
+        length="1793980"
+        type="application/octet-stream" />
+    </item>
+    <item>
       <title>Version 1.2.1</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.1</link>
       <sparkle:version>1.2.1</sparkle:version>
