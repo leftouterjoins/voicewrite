@@ -203,12 +203,16 @@ jobs:
 
       - name: Commit appcast changes
         if: ${{ env.SPARKLE_SIGNATURE != '' }}
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin master
+          git checkout master
+          git pull origin master
           git add docs/appcast.xml
           git commit -m "Update appcast for v${{ steps.version.outputs.VERSION }}"
-          git push origin HEAD:master
+          git push origin master
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

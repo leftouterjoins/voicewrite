@@ -21,10 +21,10 @@
     <string>VoiceWrite</string>
 
     <key>CFBundleVersion</key>
-    <string>15</string>
+    <string>16</string>
 
     <key>CFBundleShortVersionString</key>
-    <string>1.2.3</string>
+    <string>1.2.4</string>
 
     <key>CFBundlePackageType</key>
     <string>APPL</string>
