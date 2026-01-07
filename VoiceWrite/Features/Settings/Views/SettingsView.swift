@@ -81,18 +81,38 @@ struct GeneralSettingsView: View {
 }
 
 struct HotkeySettingsView: View {
+    @State private var hasAccessibility = AXIsProcessTrusted()
+
     var body: some View {
         Form {
-            LabeledContent("Toggle Listening") {
-                KeyboardShortcuts.Recorder(for: .toggleListening)
-            }
+            if hasAccessibility {
+                LabeledContent("Toggle Listening") {
+                    KeyboardShortcuts.Recorder(for: .toggleListening)
+                }
 
-            Text("Click the field above and press your desired key combination")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Text("Click the field above and press your desired key combination")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Accessibility Permission Required", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+
+                    Text("VoiceWrite needs accessibility permission to register global hotkeys. Please enable it in System Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Button("Open Accessibility Settings") {
+                        PermissionManager.shared.openAccessibilitySettings()
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            hasAccessibility = AXIsProcessTrusted()
+        }
     }
 }
 
