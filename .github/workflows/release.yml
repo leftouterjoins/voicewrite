@@ -127,14 +127,48 @@ jobs:
           # Use ditto (not zip) to preserve symlinks and metadata
           ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
 
-      # Notarization disabled - just signing for now
-      # - name: Notarize DMG and ZIP
-      #   env:
-      #     APPLE_ID: ${{ secrets.APPLE_ID }}
-      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #     APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-      #   run: |
-      #     ...notarization steps...
+      - name: Notarize app
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          if [ -z "$APPLE_ID" ]; then echo "No Apple ID, skipping notarization"; exit 0; fi
+
+          # Store credentials
+          xcrun notarytool store-credentials "notarytool" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD"
+
+          # Create zip for notarization
+          ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-notarize.zip"
+
+          # Submit and wait for notarization
+          xcrun notarytool submit "${APP_NAME}-notarize.zip" \
+            --keychain-profile "notarytool" \
+            --wait
+
+          # Staple the ticket
+          xcrun stapler staple "${APP_NAME}.app"
+
+          # Recreate DMG with stapled app
+          rm -rf dmg_contents
+          mkdir -p dmg_contents
+          ditto "${APP_NAME}.app" "dmg_contents/${APP_NAME}.app"
+          ln -s /Applications dmg_contents/Applications
+          rm -f "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
+          hdiutil create -volname "${APP_NAME}" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "${APP_NAME}-${{ steps.version.outputs.VERSION }}.dmg"
+
+          # Recreate ZIP with stapled app
+          rm -f "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
+          ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}-${{ steps.version.outputs.VERSION }}.zip"
+
+          # Clean up
+          rm -f "${APP_NAME}-notarize.zip"
 
       - name: Sign update for Sparkle
         env:
