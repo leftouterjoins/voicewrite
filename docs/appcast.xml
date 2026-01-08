@@ -29,8 +29,9 @@
       <description><![CDATA[
         <h2>What's New</h2>
         <ul>
-          <li>Fix auto-update for sandboxed app (enable installer service)</li>
+          <li>USB headset call button support - toggle recording with Teams/Zoom compatible headsets</li>
           <li>Fix headset button requiring two presses to toggle</li>
+          <li>Fix auto-update for sandboxed app</li>
         </ul>
       ]]></description>
       <pubDate>Thu, 08 Jan 2026 15:45:00 +0000</pubDate>
@@ -41,74 +42,9 @@
         type="application/octet-stream" />
     </item>
     <item>
-      <title>Version 1.3.2</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.2</link>
-      <sparkle:version>20</sparkle:version>
-      <sparkle:shortVersionString>1.3.2</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <pubDate>Thu, 08 Jan 2026 15:20:28 +0000</pubDate>
-      <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.2/VoiceWrite-1.3.2.zip"
-        sparkle:edSignature="M22Hoye1wkHRsaB6Jzj+5/dsH4PRKbgtH6AZZ50sb9vxBY9Xdsa8CV9bi+PlMOpkQVXza+LUmj8T+HD9A0uBCA=="
-        length="1812316"
-        type="application/octet-stream" />
-    </item>
-    <item>
-      <title>Version 1.3.2</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.2</link>
-      <sparkle:version>20</sparkle:version>
-      <sparkle:shortVersionString>1.3.2</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[
-        <h2>What's New</h2>
-        <ul>
-          <li>Fix auto-update for sandboxed app</li>
-          <li>Fix headset button requiring two presses to toggle</li>
-        </ul>
-      ]]></description>
-      <pubDate>Thu, 08 Jan 2026 15:20:00 +0000</pubDate>
-      <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.2/VoiceWrite-1.3.2.zip"
-        sparkle:edSignature="Lmx+Ki+rH2wbIHimLZqcaTFyY3HYITAoKN7oICFYcL01QUYq/yH5QAGSDS+gkmWannuDFtsDoa/4c/BuMoN8Dw=="
-        length="1900154"
-        type="application/octet-stream" />
-    </item>
-    <item>
-      <title>Version 1.3.0</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.0</link>
-      <sparkle:version>18</sparkle:version>
-      <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <pubDate>Thu, 08 Jan 2026 03:36:56 +0000</pubDate>
-      <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.0/VoiceWrite-1.3.0.zip"
-        sparkle:edSignature="KPI8EH+TVmZNT9LD8tFKQHh8L94foXmesPntfAK7PW3l3rJ9HMOXF46qK6fdo+vMHZ60t+w2nv+LfD+denzaBg=="
-        length="1810053"
-        type="application/octet-stream" />
-    </item>
-    <item>
-      <title>Version 1.3.0</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.0</link>
-      <sparkle:version>18</sparkle:version>
-      <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[
-        <h2>What's New</h2>
-        <ul>
-          <li>USB headset call button support - toggle recording with Teams/Zoom compatible headsets</li>
-        </ul>
-      ]]></description>
-      <pubDate>Wed, 08 Jan 2026 04:34:00 +0000</pubDate>
-      <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.0/VoiceWrite-1.3.0.zip"
-        sparkle:edSignature="qj16E4Eas/0tgu5gIdqEXtihow/4Ptjcmg1tajufkRi97Ls0nBXEIn4+yZLU/vH2voalxuvwvdID3C937mwgBQ=="
-        length="1896351"
-        type="application/octet-stream" />
-    </item>
-    <item>
       <title>Version 1.2.4</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.4</link>
-      <sparkle:version>1.2.4</sparkle:version>
+      <sparkle:version>17</sparkle:version>
       <sparkle:shortVersionString>1.2.4</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
       <pubDate>Wed, 07 Jan 2026 21:44:18 +0000</pubDate>
@@ -121,7 +57,7 @@
     <item>
       <title>Version 1.2.2</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.2</link>
-      <sparkle:version>1.2.2</sparkle:version>
+      <sparkle:version>16</sparkle:version>
       <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
       <pubDate>Wed, 07 Jan 2026 21:34:41 +0000</pubDate>
@@ -134,7 +70,7 @@
     <item>
       <title>Version 1.2.1</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.1</link>
-      <sparkle:version>1.2.1</sparkle:version>
+      <sparkle:version>15</sparkle:version>
       <sparkle:shortVersionString>1.2.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
       <pubDate>Mon, 05 Jan 2026 19:10:24 +0000</pubDate>
@@ -144,27 +80,5 @@
         length="1794008"
         type="application/octet-stream" />
     </item>
-    <!-- Entries added here during release process -->
-    <!-- Example entry (uncomment and update when releasing):
-    <item>
-      <title>Version 1.2.0</title>
-      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.2.0</link>
-      <sparkle:version>1.2.0</sparkle:version>
-      <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[
-        <h2>What's New</h2>
-        <ul>
-          <li>Added automatic updates</li>
-        </ul>
-      ]]></description>
-      <pubDate>Sun, 05 Jan 2026 12:00:00 +0000</pubDate>
-      <enclosure
-        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.2.0/VoiceWrite-1.2.0.zip"
-        sparkle:edSignature="SIGNATURE_HERE"
-        length="FILE_SIZE_HERE"
-        type="application/octet-stream" />
-    </item>
-    -->
   </channel>
 </rss>
