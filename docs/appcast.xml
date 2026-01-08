@@ -8,6 +8,30 @@
     <description>Most recent updates to VoiceWrite</description>
     <language>en</language>
     <item>
+      <title>Version 1.4.0</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.4.0</link>
+      <sparkle:version>22</sparkle:version>
+      <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>What's New in 1.4.0</h2>
+        <ul>
+          <li>Multi-language support with per-language hotkeys</li>
+          <li>Headset button language assignment</li>
+          <li>On-device text refinement (removes filler words, fixes self-corrections)</li>
+          <li>Custom vocabulary/dictionary for names and technical terms</li>
+          <li>Language switcher in menu bar</li>
+          <li>Reorganized settings UI with Language and Dictionary tabs</li>
+        </ul>
+      ]]></description>
+      <pubDate>Wed, 08 Jan 2026 18:00:00 +0000</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.4.0/VoiceWrite-1.4.0.zip"
+        sparkle:edSignature="1VOSDNEuSZafvdZXUXco8nZT5lRXFay+mXrXElaiHjUhi9+SCkrFnqPviyPPIjlXuICf7G9BkWDbCS1EJiyVAA=="
+        length="2005336"
+        type="application/octet-stream" />
+    </item>
+    <item>
       <title>Version 1.3.3</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.3</link>
       <sparkle:version>1.3.3</sparkle:version>
