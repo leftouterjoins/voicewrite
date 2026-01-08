@@ -336,6 +336,9 @@ struct DictionarySettingsView: View {
                 HStack {
                     TextField("Add word or phrase", text: $newWord)
                         .textFieldStyle(.roundedBorder)
+                        .onSubmit {
+                            addWord()
+                        }
                     Button("Add") {
                         addWord()
                     }
