@@ -1,8 +1,10 @@
 import SwiftUI
 import KeyboardShortcuts
+import Speech
 
 struct SettingsView: View {
     @EnvironmentObject var updaterManager: UpdaterManager
+    @EnvironmentObject var languageManager: LanguageManager
 
     var body: some View {
         TabView {
@@ -11,14 +13,15 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
 
-            HotkeySettingsView()
+            LanguageSettingsView()
+                .environmentObject(languageManager)
                 .tabItem {
-                    Label("Hotkey", systemImage: "command")
+                    Label("Language", systemImage: "globe")
                 }
 
-            HeadsetSettingsView()
+            DictionarySettingsView()
                 .tabItem {
-                    Label("Headset", systemImage: "headphones")
+                    Label("Dictionary", systemImage: "text.book.closed")
                 }
 
             PermissionsSettingsView()
@@ -36,7 +39,7 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 400, height: 300)
+        .frame(width: 620, height: 480)
     }
 }
 
@@ -48,33 +51,43 @@ struct GeneralSettingsView: View {
     @AppStorage("customColorGreen") private var customColorGreen = 0.3
     @AppStorage("customColorBlue") private var customColorBlue = 0.2
     @AppStorage("enableEmoji") private var enableEmoji = false
+    @AppStorage("enableTextRefinement") private var enableTextRefinement = true
 
     @State private var selectedColor: Color = .red
 
     var body: some View {
         Form {
-            Toggle("Launch at Login", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { _, newValue in
-                    LaunchAtLoginManager.shared.setEnabled(newValue)
-                }
+            Section("Transcription") {
+                Toggle("Convert Speech to Emoji", isOn: $enableEmoji)
+                    .help("Say 'heart' to type ❤️")
 
-            Toggle("Convert Speech to Emoji", isOn: $enableEmoji)
-                .help("Say 'heart' to type ❤️")
+                Toggle("Clean Up Transcription", isOn: $enableTextRefinement)
+                    .help("Remove filler words (um, uh) and fix self-corrections using on-device AI")
+            }
 
-            Toggle("Show Border Visualization", isOn: $showBorderVisualization)
-
-            Toggle("Use Custom Border Color", isOn: $useCustomColor)
-                .disabled(!showBorderVisualization)
-
-            if useCustomColor && showBorderVisualization {
-                ColorPicker("Border Color", selection: $selectedColor, supportsOpacity: false)
-                    .onChange(of: selectedColor) { _, newColor in
-                        if let components = NSColor(newColor).usingColorSpace(.sRGB) {
-                            customColorRed = Double(components.redComponent)
-                            customColorGreen = Double(components.greenComponent)
-                            customColorBlue = Double(components.blueComponent)
-                        }
+            Section("General") {
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        LaunchAtLoginManager.shared.setEnabled(newValue)
                     }
+            }
+
+            Section("Visual Feedback") {
+                Toggle("Show Border Visualization", isOn: $showBorderVisualization)
+
+                Toggle("Use Custom Border Color", isOn: $useCustomColor)
+                    .disabled(!showBorderVisualization)
+
+                if useCustomColor && showBorderVisualization {
+                    ColorPicker("Border Color", selection: $selectedColor, supportsOpacity: false)
+                        .onChange(of: selectedColor) { _, newColor in
+                            if let components = NSColor(newColor).usingColorSpace(.sRGB) {
+                                customColorRed = Double(components.redComponent)
+                                customColorGreen = Double(components.greenComponent)
+                                customColorBlue = Double(components.blueComponent)
+                            }
+                        }
+                }
             }
         }
         .formStyle(.grouped)
@@ -85,81 +98,306 @@ struct GeneralSettingsView: View {
     }
 }
 
-struct HotkeySettingsView: View {
+// MARK: - Language Settings
+
+struct LanguageSettingsView: View {
+    @EnvironmentObject var languageManager: LanguageManager
+    @State private var showAddLanguage = false
     @State private var hasAccessibility = false
 
     var body: some View {
         Form {
-            if hasAccessibility {
-                HotkeyRecorderView()
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Label("Accessibility Permission Required", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-
-                    Text("VoiceWrite needs accessibility permission to register global hotkeys. Please enable it in System Settings.")
-                        .font(.caption)
+            Section {
+                if languageManager.myLanguages.isEmpty {
+                    Text("No languages added yet.")
                         .foregroundStyle(.secondary)
-
-                    Button("Open Accessibility Settings") {
-                        PermissionManager.shared.openAccessibilitySettings()
+                } else {
+                    ForEach(languageManager.myLanguages, id: \.identifier) { locale in
+                        LanguageRowWithHotkey(
+                            locale: locale,
+                            languageManager: languageManager,
+                            hasAccessibility: hasAccessibility
+                        )
                     }
                 }
+
+                Button("Add Language...") {
+                    showAddLanguage = true
+                }
+            } header: {
+                Text("My Languages")
+            } footer: {
+                Text("Assign a hotkey to each language. The headset button triggers the language marked with the headset icon.")
+            }
+
+            if let progress = languageManager.downloadProgress {
+                Section("Downloading") {
+                    ProgressView(progress)
+                        .progressViewStyle(.linear)
+                }
+            }
+
+            if let error = languageManager.errorMessage {
+                Section {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+            }
+
+            if !hasAccessibility {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Accessibility Permission Required", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text("Grant accessibility permission to enable hotkeys.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button("Open Accessibility Settings") {
+                            PermissionManager.shared.openAccessibilitySettings()
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .sheet(isPresented: $showAddLanguage) {
+            AddLanguageSheet(languageManager: languageManager)
+        }
+        .onAppear {
+            hasAccessibility = AXIsProcessTrusted()
+        }
+        .task {
+            await languageManager.refreshSupportedLocales()
+            await languageManager.refreshInstalledLocales()
+        }
+    }
+}
+
+struct LanguageRowWithHotkey: View {
+    let locale: Locale
+    @ObservedObject var languageManager: LanguageManager
+    let hasAccessibility: Bool
+
+    private var isDefault: Bool { languageManager.isDefault(locale) }
+    private var isCurrent: Bool {
+        locale.identifier(.bcp47) == languageManager.currentLocale.identifier(.bcp47)
+    }
+    private var isInstalled: Bool { languageManager.isInstalled(locale) }
+    private var isHeadset: Bool { languageManager.isHeadsetLanguage(locale) }
+    private var isDownloading: Bool {
+        languageManager.downloadingLocale?.identifier(.bcp47) == locale.identifier(.bcp47)
+    }
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Language name + badges + status
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 8) {
+                    Text(locale.localizedString(forIdentifier: locale.identifier) ?? locale.identifier)
+                        .fontWeight(isCurrent ? .semibold : .regular)
+                    if isDefault {
+                        Text("Default")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.secondary.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                    // Headset indicator (next to text like Default badge)
+                    Button {
+                        languageManager.setHeadsetLanguage(isHeadset ? nil : locale)
+                    } label: {
+                        Image(systemName: isHeadset ? "headphones.circle.fill" : "headphones.circle")
+                            .foregroundStyle(isHeadset ? .blue : .secondary.opacity(0.5))
+                    }
+                    .buttonStyle(.borderless)
+                    .focusEffectDisabled()
+                    .help(isHeadset ? "Headset triggers this language" : "Set as headset language")
+                    .disabled(!isInstalled)
+                }
+                if isCurrent {
+                    Text("Active")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                } else if isDownloading {
+                    Text("Downloading...")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else if !isInstalled {
+                    Text("Not downloaded")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            // Actions (Use/Download)
+            if isDownloading {
+                ProgressView()
+                    .controlSize(.small)
+            } else if !isInstalled {
+                Button("Download") {
+                    Task { try? await languageManager.downloadModel(for: locale) }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            } else if !isCurrent {
+                Button("Use") {
+                    Task { await languageManager.setCurrentLocale(locale) }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+            // Trash (non-default only)
+            if !isDefault && !isCurrent && isInstalled {
+                Button(role: .destructive) {
+                    Task { await languageManager.deleteModel(for: locale) }
+                    languageManager.removeLanguage(locale)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help("Delete model and remove from list")
+            }
+
+            // Hotkey recorder (far right, with padding)
+            if hasAccessibility && isInstalled {
+                KeyboardShortcuts.Recorder(for: languageManager.hotkeyName(for: locale))
+                    .frame(width: 140)
+            }
+        }
+    }
+}
+
+struct AddLanguageSheet: View {
+    @ObservedObject var languageManager: LanguageManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+
+    var filteredLocales: [Locale] {
+        let available = languageManager.supportedLocales.filter { locale in
+            !languageManager.myLanguages.contains { $0.identifier(.bcp47) == locale.identifier(.bcp47) }
+        }
+
+        if searchText.isEmpty {
+            return available
+        }
+
+        return available.filter { locale in
+            let name = locale.localizedString(forIdentifier: locale.identifier) ?? locale.identifier
+            return name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Add Language")
+                    .font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }
+            }
+            .padding()
+
+            TextField("Search languages...", text: $searchText)
+                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal)
+
+            List(filteredLocales, id: \.identifier) { locale in
+                HStack {
+                    Text(locale.localizedString(forIdentifier: locale.identifier) ?? locale.identifier)
+                    Spacer()
+                    Button("Add") {
+                        Task { await languageManager.addLanguage(locale) }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+            .listStyle(.plain)
+        }
+        .frame(width: 400, height: 500)
+    }
+}
+
+struct DictionarySettingsView: View {
+    @AppStorage("customVocabularyData") private var customVocabularyData: Data = Data()
+    @State private var newWord = ""
+    @State private var vocabularyList: [String] = []
+
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    TextField("Add word or phrase", text: $newWord)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Add") {
+                        addWord()
+                    }
+                    .disabled(newWord.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+
+                if vocabularyList.isEmpty {
+                    Text("No custom words added yet. Add names, technical terms, or phrases that are often misrecognized.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(vocabularyList, id: \.self) { word in
+                        HStack {
+                            Text(word)
+                            Spacer()
+                            Button {
+                                deleteWord(word)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+            } header: {
+                Text("Custom Vocabulary")
+            } footer: {
+                Text("These words will be prioritized during transcription. Useful for names, company terms, or technical jargon.")
             }
         }
         .formStyle(.grouped)
         .padding()
         .onAppear {
-            hasAccessibility = AXIsProcessTrusted()
+            loadVocabulary()
         }
     }
-}
 
-// Separate view to prevent KeyboardShortcuts.Recorder from being instantiated
-// until we're certain accessibility is granted
-private struct HotkeyRecorderView: View {
-    var body: some View {
-        LabeledContent("Toggle Listening") {
-            KeyboardShortcuts.Recorder(for: .toggleListening)
+    private func loadVocabulary() {
+        if let decoded = try? JSONDecoder().decode([String].self, from: customVocabularyData) {
+            vocabularyList = decoded
         }
-
-        Text("Click the field above and press your desired key combination")
-            .font(.caption)
-            .foregroundStyle(.secondary)
     }
-}
 
-struct HeadsetSettingsView: View {
-    @AppStorage("headsetEnabled") private var headsetEnabled = true
-    @ObservedObject private var headsetService = HeadsetService.shared
-
-    var body: some View {
-        Form {
-            Toggle("Enable Headset Button", isOn: $headsetEnabled)
-
-            if headsetEnabled {
-                LabeledContent("Status") {
-                    HStack {
-                        if headsetService.isConnected {
-                            Image(systemName: "headphones.circle.fill")
-                                .foregroundStyle(.green)
-                            Text(headsetService.deviceName ?? "Connected")
-                        } else {
-                            Image(systemName: "headphones.circle")
-                                .foregroundStyle(.secondary)
-                            Text("No headset detected")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                Text("Press the call button to toggle recording.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+    private func saveVocabulary() {
+        if let encoded = try? JSONEncoder().encode(vocabularyList) {
+            customVocabularyData = encoded
         }
-        .formStyle(.grouped)
-        .padding()
+    }
+
+    private func addWord() {
+        let trimmed = newWord.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, !vocabularyList.contains(trimmed) else { return }
+        vocabularyList.append(trimmed)
+        vocabularyList.sort()
+        saveVocabulary()
+        newWord = ""
+    }
+
+    private func deleteWord(_ word: String) {
+        vocabularyList.removeAll { $0 == word }
+        saveVocabulary()
     }
 }
 

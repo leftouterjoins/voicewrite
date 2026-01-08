@@ -40,6 +40,7 @@ struct VoiceWriteApp: App {
             SettingsView()
                 .environmentObject(appState)
                 .environmentObject(updaterManager)
+                .environmentObject(appState.languageManager)
         }
     }
 }

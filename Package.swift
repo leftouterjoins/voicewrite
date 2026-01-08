@@ -21,7 +21,7 @@ let package = Package(
                 "Sparkle",
             ],
             path: "VoiceWrite",
-            exclude: ["Info.plist", "VoiceWrite.entitlements"]
+            exclude: ["Info.plist", "VoiceWrite.entitlements", "icon@3x.png", "AppIcon.icns"]
         ),
     ]
 )

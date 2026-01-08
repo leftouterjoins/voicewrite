@@ -17,6 +17,8 @@ final class TranscriptionService: ObservableObject {
     private var configuredLocale: Locale?
     // Emoji setting (read at setup, used during transcriber creation)
     private nonisolated(unsafe) var enableEmoji: Bool = false
+    // Custom vocabulary hints from user settings
+    private var customVocabulary: [String] = []
 
     @Published var isModelInstalled = false
     @Published var downloadProgress: Progress?
@@ -28,6 +30,12 @@ final class TranscriptionService: ObservableObject {
         self.configuredLocale = locale
         // Read emoji setting
         self.enableEmoji = UserDefaults.standard.bool(forKey: "enableEmoji")
+        // Load custom vocabulary from settings
+        if let data = UserDefaults.standard.data(forKey: "customVocabularyData"),
+           let vocabulary = try? JSONDecoder().decode([String].self, from: data) {
+            self.customVocabulary = vocabulary
+            print("[VoiceWrite] Loaded \(vocabulary.count) custom vocabulary words")
+        }
 
         // Create initial transcriber to get audio format and verify model
         let transcriber = DictationTranscriber(
@@ -49,6 +57,26 @@ final class TranscriptionService: ObservableObject {
 
         // Ensure model is installed (may trigger download)
         try await ensureModel(locale: locale)
+    }
+
+    /// Change the transcription locale at runtime
+    /// Call this when the user switches languages in settings
+    func changeLocale(_ locale: Locale) async throws {
+        print("[VoiceWrite] Changing locale to \(locale.identifier)")
+
+        // Cancel any pre-warmed analyzer (it's for the old locale)
+        warmedAnalyzer = nil
+        warmedTranscriber = nil
+        warmedInputStream = nil
+        warmedInputBuilder = nil
+
+        // Re-setup with new locale
+        try await setupTranscriber(locale: locale)
+
+        // Pre-warm for the new locale
+        await prewarm()
+
+        print("[VoiceWrite] Locale change complete")
     }
 
     // MARK: - Start Analyzer (called when recording begins)
@@ -101,9 +129,13 @@ final class TranscriptionService: ObservableObject {
         try await analyzer.start(inputSequence: stream)
 
         // Set context with vocabulary hints for proper noun recognition
+        // Combine hardcoded "VoiceWrite" with user's custom vocabulary
+        var vocabularyHints = ["VoiceWrite"]
+        vocabularyHints.append(contentsOf: customVocabulary)
+
         let context = AnalysisContext()
         context.contextualStrings = [
-            AnalysisContext.ContextualStringsTag("vocabulary"): ["VoiceWrite"]
+            AnalysisContext.ContextualStringsTag("vocabulary"): vocabularyHints
         ]
         try await analyzer.setContext(context)
     }
@@ -132,10 +164,13 @@ final class TranscriptionService: ObservableObject {
         do {
             try await analyzer.start(inputSequence: stream)
 
-            // Set context with vocabulary hints
+            // Set context with vocabulary hints (same as startAnalyzer)
+            var vocabularyHints = ["VoiceWrite"]
+            vocabularyHints.append(contentsOf: customVocabulary)
+
             let context = AnalysisContext()
             context.contextualStrings = [
-                AnalysisContext.ContextualStringsTag("vocabulary"): ["VoiceWrite"]
+                AnalysisContext.ContextualStringsTag("vocabulary"): vocabularyHints
             ]
             try await analyzer.setContext(context)
 

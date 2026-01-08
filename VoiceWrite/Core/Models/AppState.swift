@@ -34,6 +34,9 @@ final class AppState: ObservableObject {
     @Published var errorMessage: String?
     @Published var audioLevel: Float = 0        // 0.0-1.0 for overlay visualization
 
+    /// Language manager for locale/model management (exposed for Settings UI)
+    let languageManager = LanguageManager()
+
     /// User preference for overlay color scheme
     @AppStorage("overlayColor") private var overlayColorRaw = OverlayColor.redOrange.rawValue
     var overlayColor: OverlayColor {
@@ -52,6 +55,7 @@ final class AppState: ObservableObject {
     private var listeningTask: Task<Void, Never>?
     private lazy var audioService = AudioCaptureService()
     private let transcriptionService = TranscriptionService()
+    private let textRefinementService = TextRefinementService()
     private lazy var typingService = TextTypingService()
     private lazy var overlayManager = ListeningOverlayManager()
     private var downloadProgressCancellable: AnyCancellable?
@@ -67,6 +71,35 @@ final class AppState: ObservableObject {
         print("[VoiceWrite] Hotkey configured")
         setupHeadsetButton()
         print("[VoiceWrite] Headset button configured")
+        setupLanguageManager()
+        print("[VoiceWrite] Language manager configured")
+    }
+
+    private func setupLanguageManager() {
+        languageManager.onLocaleChange = { [weak self] locale in
+            await self?.handleLocaleChange(locale)
+        }
+    }
+
+    private func handleLocaleChange(_ locale: Locale) async {
+        // Don't change locale while listening
+        guard !isListening else {
+            errorMessage = "Cannot change language while recording"
+            return
+        }
+
+        print("[VoiceWrite] Handling locale change to \(locale.identifier)")
+        modelState = .checking
+
+        do {
+            try await transcriptionService.changeLocale(locale)
+            modelState = .installed
+            print("[VoiceWrite] Locale change successful")
+        } catch {
+            print("[VoiceWrite] Locale change failed: \(error)")
+            modelState = .failed(error)
+            errorMessage = "Failed to switch language: \(error.localizedDescription)"
+        }
     }
 
     func initialize() {
@@ -82,8 +115,21 @@ final class AppState: ObservableObject {
     }
 
     private func setupHotkey() {
-        HotkeyService.shared.configure { [weak self] in
-            self?.toggleListening()
+        HotkeyService.shared.configure { [weak self] locale in
+            self?.handleLanguageHotkey(locale)
+        }
+        // Register hotkeys for all existing languages
+        HotkeyService.shared.registerAllHotkeys(for: languageManager.myLanguages)
+    }
+
+    private func handleLanguageHotkey(_ locale: Locale) {
+        Task { @MainActor in
+            // Switch to the language if different
+            if locale.identifier(.bcp47) != languageManager.currentLocale.identifier(.bcp47) {
+                await languageManager.setCurrentLocale(locale)
+            }
+            // Then toggle listening
+            toggleListening()
         }
     }
 
@@ -101,7 +147,17 @@ final class AppState: ObservableObject {
 
     private func handleHeadsetButtonDown() {
         guard headsetEnabled else { return }
-        toggleListening()
+
+        // Get the headset-assigned language
+        if let headsetLangId = languageManager.headsetLanguageId,
+           let headsetLocale = languageManager.myLanguages.first(where: {
+               $0.identifier(.bcp47) == headsetLangId
+           }) {
+            handleLanguageHotkey(headsetLocale)
+        } else {
+            // Fallback: just toggle with current language
+            toggleListening()
+        }
     }
 
     private func handleHeadsetButtonUp() {
@@ -150,7 +206,10 @@ final class AppState: ObservableObject {
                 try await transcription.startAnalyzer()
                 print("[VoiceWrite] Analyzer started")
 
-                // Set up result handling - yield commands to stream (no new Tasks!)
+                // Capture refinement service for callback
+                let refinement = self.textRefinementService
+
+                // Set up result handling - yield commands to stream
                 transcription.startResultHandling(
                     onVolatile: { [weak self] text in
                         self?.volatileTranscript = text
@@ -161,12 +220,16 @@ final class AppState: ObservableObject {
                         }
                     },
                     onFinal: { [weak self] text in
-                        self?.finalizedTranscript += text
-                        self?.volatileTranscript = ""
-                        if let cont = getContinuation() {
-                            cont.yield(.final(text))
-                        } else {
-                            print("[VoiceWrite] WARNING: continuation nil for final")
+                        // Apply text refinement (filler word removal, etc.) before typing
+                        Task { @MainActor in
+                            let refinedText = await refinement.refine(text)
+                            self?.finalizedTranscript += refinedText
+                            self?.volatileTranscript = ""
+                            if let cont = getContinuation() {
+                                cont.yield(.final(refinedText))
+                            } else {
+                                print("[VoiceWrite] WARNING: continuation nil for final")
+                            }
                         }
                     }
                 )
@@ -255,6 +318,9 @@ final class AppState: ObservableObject {
         print("[VoiceWrite] setupTranscriber() called")
         modelState = .checking
 
+        // Set up text refinement service (Foundation Models)
+        await textRefinementService.setup()
+
         // Observe download progress from TranscriptionService
         downloadProgressCancellable = transcriptionService.$downloadProgress
             .compactMap { $0 }
@@ -263,8 +329,24 @@ final class AppState: ObservableObject {
                 self?.modelState = .downloading(progress)
             }
 
+        // Initialize language manager and ensure we have an installed locale
+        await languageManager.refreshSupportedLocales()
+
         do {
-            try await transcriptionService.setupTranscriber()
+            // This will download the model if needed, or switch to an installed locale
+            try await languageManager.ensureCurrentLocaleReady()
+        } catch {
+            print("[VoiceWrite] Failed to ensure locale ready: \(error)")
+            modelState = .failed(error)
+            errorMessage = "Failed to download language model: \(error.localizedDescription)"
+            return
+        }
+
+        // Use the language manager's current locale (now guaranteed to be installed)
+        let selectedLocale = languageManager.currentLocale
+
+        do {
+            try await transcriptionService.setupTranscriber(locale: selectedLocale)
             print("[VoiceWrite] Transcriber setup successfully!")
             modelState = .installed
             // Pre-warm first session
