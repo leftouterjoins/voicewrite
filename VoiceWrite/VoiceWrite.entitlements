@@ -21,5 +21,12 @@
     <!-- USB HID device access for headset buttons -->
     <key>com.apple.security.device.usb</key>
     <true/>
+
+    <!-- Sparkle XPC service for auto-updates (required for sandboxed apps) -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>com.voicewrite.app-spks</string>
+        <string>com.voicewrite.app-spki</string>
+    </array>
 </dict>
 </plist>
