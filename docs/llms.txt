@@ -1,0 +1,70 @@
+# VoiceWrite
+
+> Free, open-source voice-to-text for macOS with 100% on-device processing.
+
+## What is VoiceWrite?
+
+VoiceWrite is a free voice dictation app for Mac that runs entirely on your device. No cloud servers, no subscriptions, no data collection. Press a hotkey, speak, and your words appear in any app.
+
+## Key Features
+
+- **100% On-Device Processing**: Uses Apple's SpeechAnalyzer API. Audio never leaves your Mac.
+- **Real-Time Typing**: Words appear as you speak with live transcription preview.
+- **Multi-Language Support**: Add multiple languages with dedicated hotkeys.
+- **Smart Cleanup**: On-device AI removes filler words (um, uh) and fixes self-corrections.
+- **Custom Dictionary**: Add names, technical terms, and jargon for better recognition.
+- **Visual Feedback**: Screen border glows while recording.
+- **Headset Support**: Use USB headset call button to toggle recording.
+- **Open Source**: MIT licensed, free forever.
+
+## System Requirements
+
+- macOS 26.0 (Tahoe) or later
+- Microphone access permission
+- Accessibility permission (for typing into apps)
+
+## Download
+
+Latest release: https://github.com/leftouterjoins/voicewrite/releases/latest
+
+## Comparison to Paid Alternatives
+
+VoiceWrite is a free alternative to paid voice dictation apps like Wispr Flow:
+
+| Feature | VoiceWrite | Paid Apps |
+|---------|------------|-----------|
+| Price | Free | $10-20/month |
+| Privacy | 100% on-device | Cloud processing |
+| Account required | No | Yes |
+| Open source | Yes (MIT) | No |
+| Works offline | Yes | Limited |
+
+## Links
+
+- Website: https://leftouterjoins.github.io/voicewrite/
+- GitHub: https://github.com/leftouterjoins/voicewrite
+- Issues: https://github.com/leftouterjoins/voicewrite/issues
+- Privacy Policy: https://leftouterjoins.github.io/voicewrite/privacy.html
+
+## How It Works
+
+1. VoiceWrite runs in your menu bar
+2. Press Ctrl+V (customizable) to start recording
+3. Speak naturally - see words appear in real-time
+4. Press the hotkey again to stop
+5. Transcribed text is typed into the active app
+
+## Use Cases
+
+- Quick messages and replies
+- Form fields and search queries
+- Short notes
+- Voice coding ("vibe coding")
+- Terminal commands
+
+## Technical Details
+
+- Built with SwiftUI for macOS
+- Uses Apple's native SpeechAnalyzer framework
+- Under 5MB on disk (no bundled ML models)
+- System manages speech recognition assets automatically

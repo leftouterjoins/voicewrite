@@ -378,6 +378,67 @@ header .back-link:hover {
     font-size: 0.9rem;
 }
 
+/* Comparison Section */
+.comparison {
+    padding: 80px 0;
+    background: var(--color-surface);
+}
+
+.comparison h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 16px;
+}
+
+.comparison .section-intro {
+    text-align: center;
+    color: var(--color-text-muted);
+    max-width: 600px;
+    margin: 0 auto 48px;
+}
+
+.comparison-table {
+    max-width: 700px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.comparison-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.comparison-table th {
+    background: var(--color-secondary);
+    font-weight: 600;
+}
+
+.comparison-table th:nth-child(2) {
+    color: var(--color-primary);
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table td:first-child {
+    color: var(--color-text-muted);
+}
+
+.comparison-table td strong {
+    color: var(--color-primary);
+}
+
 /* FAQ Section */
 .faq {
     padding: 80px 0;
