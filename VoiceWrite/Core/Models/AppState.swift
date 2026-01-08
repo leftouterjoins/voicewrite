@@ -40,6 +40,9 @@ final class AppState: ObservableObject {
         OverlayColor(rawValue: overlayColorRaw) ?? .redOrange
     }
 
+    /// Headset button settings
+    @AppStorage("headsetEnabled") private var headsetEnabled = true
+
     /// Computed for backward compatibility
     var isModelLoaded: Bool {
         if case .installed = modelState { return true }
@@ -62,6 +65,8 @@ final class AppState: ObservableObject {
         print("[VoiceWrite] AppState init started")
         setupHotkey()
         print("[VoiceWrite] Hotkey configured")
+        setupHeadsetButton()
+        print("[VoiceWrite] Headset button configured")
     }
 
     func initialize() {
@@ -80,6 +85,27 @@ final class AppState: ObservableObject {
         HotkeyService.shared.configure { [weak self] in
             self?.toggleListening()
         }
+    }
+
+    private func setupHeadsetButton() {
+        HeadsetService.shared.configure(
+            onButtonDown: { [weak self] in
+                self?.handleHeadsetButtonDown()
+            },
+            onButtonUp: { [weak self] in
+                self?.handleHeadsetButtonUp()
+            }
+        )
+        HeadsetService.shared.start()
+    }
+
+    private func handleHeadsetButtonDown() {
+        guard headsetEnabled else { return }
+        toggleListening()
+    }
+
+    private func handleHeadsetButtonUp() {
+        // Toggle mode - no action on button up
     }
 
     private func checkPermissions() {

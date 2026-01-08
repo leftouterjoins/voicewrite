@@ -16,6 +16,11 @@ struct SettingsView: View {
                     Label("Hotkey", systemImage: "command")
                 }
 
+            HeadsetSettingsView()
+                .tabItem {
+                    Label("Headset", systemImage: "headphones")
+                }
+
             PermissionsSettingsView()
                 .tabItem {
                     Label("Permissions", systemImage: "lock.shield")
@@ -113,6 +118,40 @@ struct HotkeySettingsView: View {
         .onAppear {
             hasAccessibility = AXIsProcessTrusted()
         }
+    }
+}
+
+struct HeadsetSettingsView: View {
+    @AppStorage("headsetEnabled") private var headsetEnabled = true
+    @ObservedObject private var headsetService = HeadsetService.shared
+
+    var body: some View {
+        Form {
+            Toggle("Enable Headset Button", isOn: $headsetEnabled)
+
+            if headsetEnabled {
+                LabeledContent("Status") {
+                    HStack {
+                        if headsetService.isConnected {
+                            Image(systemName: "headphones.circle.fill")
+                                .foregroundStyle(.green)
+                            Text(headsetService.deviceName ?? "Connected")
+                        } else {
+                            Image(systemName: "headphones.circle")
+                                .foregroundStyle(.secondary)
+                            Text("No headset detected")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Text("Press the call button to toggle recording.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
     }
 }
 
