@@ -8,9 +8,29 @@
     <description>Most recent updates to VoiceWrite</description>
     <language>en</language>
     <item>
+      <title>Version 1.3.3</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.3</link>
+      <sparkle:version>21</sparkle:version>
+      <sparkle:shortVersionString>1.3.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>What's New</h2>
+        <ul>
+          <li>Fix auto-update for sandboxed app (enable installer service)</li>
+          <li>Fix headset button requiring two presses to toggle</li>
+        </ul>
+      ]]></description>
+      <pubDate>Thu, 08 Jan 2026 15:45:00 +0000</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.3/VoiceWrite-1.3.3.zip"
+        sparkle:edSignature="U4s7dyrxHC42ZlE959hzsqte9blnMQMMnXR6XJ6rJ3+gTV1jba9ZKxxLIVQpjV4bHeqieqxz53JFYOSBgMB9Bw=="
+        length="1900223"
+        type="application/octet-stream" />
+    </item>
+    <item>
       <title>Version 1.3.2</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.2</link>
-      <sparkle:version>1.3.2</sparkle:version>
+      <sparkle:version>20</sparkle:version>
       <sparkle:shortVersionString>1.3.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
       <pubDate>Thu, 08 Jan 2026 15:20:28 +0000</pubDate>

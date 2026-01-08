@@ -4,7 +4,7 @@ APP_NAME := VoiceWrite
 BUILD_DIR := .build
 APP_BUNDLE := $(APP_NAME).app
 INSTALL_DIR := /Applications
-VERSION := 1.3.2
+VERSION := 1.3.3
 # Development signing (for local testing)
 DEV_IDENTITY := Apple Development: support@pineridgeranch.net (Z42AQ7N7KX)
 # Distribution signing (for release)
