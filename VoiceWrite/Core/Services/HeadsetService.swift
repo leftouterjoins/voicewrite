@@ -2,7 +2,7 @@ import Foundation
 import IOKit.hid
 import os.log
 
-private let headsetLog = OSLog(subsystem: "com.leftouterjoins.VoiceWrite", category: "HeadsetService")
+private let headsetLog = OSLog(subsystem: "com.voicewrite.app", category: "HeadsetService")
 
 final class HeadsetService: ObservableObject, @unchecked Sendable {
     @MainActor static let shared = HeadsetService()
@@ -13,16 +13,18 @@ final class HeadsetService: ObservableObject, @unchecked Sendable {
     private var hidManager: IOHIDManager?
     private var onButtonDown: (() -> Void)?
     private var onButtonUp: (() -> Void)?
-    private var lastButtonState = false
+    private var lastButtonPressTime: UInt64 = 0
+    private var lastButtonValue: CFIndex = -1  // Track previous state for edge detection
     private let lock = NSLock()
+
+    // Debounce interval in nanoseconds (300ms)
+    private static let debounceIntervalNs: UInt64 = 300_000_000
 
     // HID Telephony Usage Page (0x0B) - used by Teams/Zoom compatible headsets
     private static let kHIDPage_Telephony: Int = 0x0B
 
     private static func log(_ message: String) {
-        #if DEBUG
-        print("[HeadsetService] \(message)")
-        #endif
+        NSLog("[HeadsetService] %@", message)
     }
 
     private init() {
@@ -137,22 +139,50 @@ final class HeadsetService: ObservableObject, @unchecked Sendable {
         let usage = IOHIDElementGetUsage(element)
         let intValue = IOHIDValueGetIntegerValue(value)
 
-        // Only handle call buttons on Telephony page
-        // Usage 0x20 = Hook Switch, 0x21 = Flash (both used for call button)
+        // Only handle telephony page events
         guard usagePage == UInt32(Self.kHIDPage_Telephony) else { return }
+
+        // Log telephony events for debugging
+        Self.log("Telephony event: usage=0x\(String(usage, radix: 16)) value=\(intValue)")
+
+        // Accept Hook Switch (0x20) or Flash (0x21) for call button
         guard usage == 0x20 || usage == 0x21 else { return }
 
-        // Only trigger on button press (value=1), not release
-        guard intValue == 1 else { return }
-
-        Self.log("Call button pressed (usage=0x\(String(usage, radix: 16)))")
-
+        // Edge detection: trigger on state CHANGES, not just value=1
+        // This handles multi-state buttons that toggle (0→1→0 or 0→1→2→0)
+        let now = DispatchTime.now().uptimeNanoseconds
         lock.lock()
+        let previousValue = lastButtonValue
+        let isStateChange = (intValue != previousValue)
+        lastButtonValue = intValue
+
+        let elapsed = now - lastButtonPressTime
+        let shouldFire = isStateChange && elapsed > Self.debounceIntervalNs
+        if shouldFire {
+            lastButtonPressTime = now
+        }
         let downCallback = onButtonDown
         lock.unlock()
 
-        Task { @MainActor in
-            downCallback?()
+        guard isStateChange else {
+            Self.log("Call button same state (value=\(intValue)), ignoring")
+            return
+        }
+
+        guard shouldFire else {
+            Self.log("Call button debounced (elapsed: \(elapsed / 1_000_000)ms)")
+            return
+        }
+
+        Self.log("Call button state changed (\(previousValue) → \(intValue)) - invoking callback")
+
+        if downCallback != nil {
+            Self.log("Callback exists, dispatching to main")
+            Task { @MainActor in
+                downCallback?()
+            }
+        } else {
+            Self.log("WARNING: No callback configured!")
         }
     }
 }

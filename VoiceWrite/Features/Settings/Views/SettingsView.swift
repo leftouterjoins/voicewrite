@@ -86,18 +86,12 @@ struct GeneralSettingsView: View {
 }
 
 struct HotkeySettingsView: View {
-    @State private var hasAccessibility = AXIsProcessTrusted()
+    @State private var hasAccessibility = false
 
     var body: some View {
         Form {
             if hasAccessibility {
-                LabeledContent("Toggle Listening") {
-                    KeyboardShortcuts.Recorder(for: .toggleListening)
-                }
-
-                Text("Click the field above and press your desired key combination")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HotkeyRecorderView()
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     Label("Accessibility Permission Required", systemImage: "exclamationmark.triangle.fill")
@@ -118,6 +112,20 @@ struct HotkeySettingsView: View {
         .onAppear {
             hasAccessibility = AXIsProcessTrusted()
         }
+    }
+}
+
+// Separate view to prevent KeyboardShortcuts.Recorder from being instantiated
+// until we're certain accessibility is granted
+private struct HotkeyRecorderView: View {
+    var body: some View {
+        LabeledContent("Toggle Listening") {
+            KeyboardShortcuts.Recorder(for: .toggleListening)
+        }
+
+        Text("Click the field above and press your desired key combination")
+            .font(.caption)
+            .foregroundStyle(.secondary)
     }
 }
 
