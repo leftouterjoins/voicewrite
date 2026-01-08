@@ -10,6 +10,19 @@
     <item>
       <title>Version 1.4.0</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.4.0</link>
+      <sparkle:version>1.4.0</sparkle:version>
+      <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 08 Jan 2026 16:54:07 +0000</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.4.0/VoiceWrite-1.4.0.zip"
+        sparkle:edSignature="ZOW72Ywh7Ma/n9xkXWlFZUIPemY5RnZKmnGDmc+KdwlY4UvocJ6NB1H4zpHaXFHKBjgjy+BuvmhvB0vhzjD1Cw=="
+        length="1914932"
+        type="application/octet-stream" />
+    </item>
+    <item>
+      <title>Version 1.4.0</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.4.0</link>
       <sparkle:version>22</sparkle:version>
       <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
