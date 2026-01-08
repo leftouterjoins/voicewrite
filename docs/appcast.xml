@@ -10,6 +10,19 @@
     <item>
       <title>Version 1.3.3</title>
       <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.3</link>
+      <sparkle:version>1.3.3</sparkle:version>
+      <sparkle:shortVersionString>1.3.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <pubDate>Thu, 08 Jan 2026 15:27:30 +0000</pubDate>
+      <enclosure
+        url="https://github.com/leftouterjoins/voicewrite/releases/download/v1.3.3/VoiceWrite-1.3.3.zip"
+        sparkle:edSignature="ZDm27iSoACBTI7hKzanu23xC5visBfNpitO+edPSFkp7vDxzTFTbT9AkiX55UoxQZ93dA5sR7d+KHUFr6XVcBA=="
+        length="1812388"
+        type="application/octet-stream" />
+    </item>
+    <item>
+      <title>Version 1.3.3</title>
+      <link>https://github.com/leftouterjoins/voicewrite/releases/tag/v1.3.3</link>
       <sparkle:version>21</sparkle:version>
       <sparkle:shortVersionString>1.3.3</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
