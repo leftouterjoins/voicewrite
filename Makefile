@@ -1,8 +1,10 @@
-.PHONY: build release app run debug clean install uninstall notarize notarize-status notarize-log generate-keys sign-update
+.PHONY: build release app run debug clean install uninstall notarize notarize-status notarize-log generate-keys sign-update inputmethod install-inputmethod uninstall-inputmethod
 
 APP_NAME := VoiceWrite
 BUILD_DIR := .build
 APP_BUNDLE := $(APP_NAME).app
+IM_BUNDLE := VoiceWriteInputMethod.app
+IM_INSTALL_DIR := $(HOME)/Library/Input\ Methods
 INSTALL_DIR := /Applications
 VERSION := 1.4.0
 # Development signing (for local testing)
@@ -31,7 +33,7 @@ release:
 	@echo "Release build complete"
 
 # Create app bundle (release)
-app: release
+app: release inputmethod
 	@rm -rf $(APP_BUNDLE)
 	@mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	@mkdir -p $(APP_BUNDLE)/Contents/Resources
@@ -45,6 +47,8 @@ app: release
 	@cp -r $(BUILD_DIR)/arm64-apple-macosx/release/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
 	@# Copy app icon to Resources
 	@cp VoiceWrite/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
+	@# Embed Input Method in Resources (auto-installed to ~/Library/Input Methods on launch)
+	@cp -R $(IM_BUNDLE) $(APP_BUNDLE)/Contents/Resources/
 	@# Copy Sparkle framework to Frameworks/
 	@cp -R $(SPARKLE_XCFRAMEWORK) $(APP_BUNDLE)/Contents/Frameworks/
 	@# Sign Sparkle components (order matters - XPC services first, never use --deep)
@@ -62,6 +66,9 @@ app: release
 	@for bundle in $(APP_BUNDLE)/Contents/Resources/*.bundle; do \
 		codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime "$$bundle" 2>/dev/null || true; \
 	done
+	@# Sign embedded Input Method
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime \
+		"$(APP_BUNDLE)/Contents/Resources/$(IM_BUNDLE)"
 	@# Sign main app last
 	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime --entitlements "$(ENTITLEMENTS)" $(APP_BUNDLE)
 	@echo "Created and signed $(APP_BUNDLE)"
@@ -111,6 +118,39 @@ uninstall:
 clean:
 	swift package clean
 	rm -rf $(APP_BUNDLE)
+	rm -rf $(IM_BUNDLE)
+
+# Build Input Method bundle
+inputmethod:
+	swift build -c release --product VoiceWriteInputMethod
+	@rm -rf $(IM_BUNDLE)
+	@mkdir -p $(IM_BUNDLE)/Contents/MacOS
+	@mkdir -p $(IM_BUNDLE)/Contents/Resources
+	@cp $(BUILD_DIR)/release/VoiceWriteInputMethod $(IM_BUNDLE)/Contents/MacOS/
+	@cp VoiceWriteInputMethod/Info.plist $(IM_BUNDLE)/Contents/
+	@echo "APPL????" > $(IM_BUNDLE)/Contents/PkgInfo
+	@# Copy app icon
+	@cp VoiceWrite/AppIcon.icns $(IM_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@# Copy menu bar icon
+	@cp VoiceWriteInputMethod/Resources/MenuIcon.tiff $(IM_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@# Copy localized strings
+	@cp -R InputMethodResources/en.lproj $(IM_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@# Sign the input method
+	@codesign -f -s "$(CODESIGN_IDENTITY)" -o runtime $(IM_BUNDLE)
+	@echo "Created and signed $(IM_BUNDLE)"
+
+# Install Input Method to user Library (no admin required)
+install-inputmethod: inputmethod
+	@mkdir -p "$(IM_INSTALL_DIR)"
+	@rm -rf "$(IM_INSTALL_DIR)/$(IM_BUNDLE)"
+	@cp -r $(IM_BUNDLE) "$(IM_INSTALL_DIR)/"
+	@echo "Installed to $(IM_INSTALL_DIR)/$(IM_BUNDLE)"
+	@echo "Add 'VoiceWrite' in System Settings > Keyboard > Input Sources"
+
+# Uninstall Input Method
+uninstall-inputmethod:
+	@rm -rf "$(IM_INSTALL_DIR)/$(IM_BUNDLE)"
+	@echo "Removed. You may need to log out and back in."
 
 # Generate Sparkle EdDSA keys (one-time setup)
 generate-keys:
@@ -131,19 +171,22 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build            - Debug build"
-	@echo "  release          - Release build"
-	@echo "  app              - Create signed VoiceWrite.app bundle"
-	@echo "  notarize         - Submit for notarization and wait"
-	@echo "  notarize-status  - Check notarization history"
-	@echo "  notarize-log     - Get log (make notarize-log ID=xxx)"
-	@echo "  run              - Build and run the app"
-	@echo "  debug            - Run with lldb for debugging"
-	@echo "  install          - Install to /Applications"
-	@echo "  uninstall        - Remove from /Applications"
-	@echo "  clean            - Clean build artifacts"
-	@echo "  generate-keys    - Generate Sparkle EdDSA keypair (one-time)"
-	@echo "  sign-update      - Sign update archive (FILE=xxx.zip)"
-	@echo "  help             - Show this help"
+	@echo "  build               - Debug build"
+	@echo "  release             - Release build"
+	@echo "  app                 - Create signed VoiceWrite.app bundle"
+	@echo "  notarize            - Submit for notarization and wait"
+	@echo "  notarize-status     - Check notarization history"
+	@echo "  notarize-log        - Get log (make notarize-log ID=xxx)"
+	@echo "  run                 - Build and run the app"
+	@echo "  debug               - Run with lldb for debugging"
+	@echo "  install             - Install to /Applications"
+	@echo "  uninstall           - Remove from /Applications"
+	@echo "  clean               - Clean build artifacts"
+	@echo "  generate-keys       - Generate Sparkle EdDSA keypair (one-time)"
+	@echo "  sign-update         - Sign update archive (FILE=xxx.zip)"
+	@echo "  inputmethod         - Build Input Method bundle"
+	@echo "  install-inputmethod - Install Input Method (requires admin)"
+	@echo "  uninstall-inputmethod - Remove Input Method"
+	@echo "  help                - Show this help"
 	@echo ""
 	@echo "Note: Uses macOS SpeechAnalyzer API (requires macOS 26+)"

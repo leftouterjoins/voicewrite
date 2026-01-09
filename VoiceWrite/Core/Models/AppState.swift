@@ -56,12 +56,9 @@ final class AppState: ObservableObject {
     private lazy var audioService = AudioCaptureService()
     private let transcriptionService = TranscriptionService()
     private let textRefinementService = TextRefinementService()
-    private lazy var typingService = TextTypingService()
     private lazy var overlayManager = ListeningOverlayManager()
+    private lazy var previewManager = TranscriptionPreviewManager()
     private var downloadProgressCancellable: AnyCancellable?
-
-    // Typing command stream - single consumer processes commands sequentially
-    private var typingContinuation: AsyncStream<TypeCommand>.Continuation?
 
     private var hasInitialized = false
 
@@ -106,6 +103,10 @@ final class AppState: ObservableObject {
         guard !hasInitialized else { return }
         hasInitialized = true
         print("[VoiceWrite] Deferred initialization")
+
+        // Install/update Input Method if bundled
+        _ = InputMethodInstaller.shared.updateIfNeeded()
+
         checkPermissions()
 
         Task { @MainActor in
@@ -186,19 +187,12 @@ final class AppState: ObservableObject {
         volatileTranscript = ""
         finalizedTranscript = ""
         overlayManager.show()
-
-        // Start typing session - get continuation for sending commands
-        let typing = typingService
-        Task {
-            typingContinuation = await typing.startSession()
-        }
-
-        // Capture continuation for callbacks (will be set by the time results arrive)
-        let getContinuation = { [weak self] in self?.typingContinuation }
+        previewManager.show()
 
         // Capture services for use in detached task
         let transcription = transcriptionService
         let audio = audioService
+        let preview = previewManager
 
         listeningTask = Task {
             do {
@@ -209,27 +203,19 @@ final class AppState: ObservableObject {
                 // Capture refinement service for callback
                 let refinement = self.textRefinementService
 
-                // Set up result handling - yield commands to stream
+                // Set up result handling - send to preview window
                 transcription.startResultHandling(
                     onVolatile: { [weak self] text in
                         self?.volatileTranscript = text
-                        if let cont = getContinuation() {
-                            cont.yield(.volatile(text))
-                        } else {
-                            print("[VoiceWrite] WARNING: continuation nil for volatile")
-                        }
+                        preview.updateVolatile(text)
                     },
                     onFinal: { [weak self] text in
-                        // Apply text refinement (filler word removal, etc.) before typing
+                        // Apply text refinement (filler word removal, etc.) before display
                         Task { @MainActor in
                             let refinedText = await refinement.refine(text)
                             self?.finalizedTranscript += refinedText
                             self?.volatileTranscript = ""
-                            if let cont = getContinuation() {
-                                cont.yield(.final(refinedText))
-                            } else {
-                                print("[VoiceWrite] WARNING: continuation nil for final")
-                            }
+                            preview.appendFinal(refinedText)
                         }
                     }
                 )
@@ -275,17 +261,16 @@ final class AppState: ObservableObject {
     private func stopListening() {
         print("[VoiceWrite] stopListening() called")
 
-        // Capture services and continuation for async cleanup
-        let typing = typingService
+        // Capture services for async cleanup
         let audio = audioService
         let transcription = transcriptionService
-        let continuation = typingContinuation  // Capture now before any cleanup
+        let preview = previewManager
 
         overlayManager.hide()
         isListening = false
         audioLevel = 0  // Reset visualization level
 
-        // Finalize transcription FIRST, then end typing session
+        // Finalize transcription, then paste and hide preview
         Task { @MainActor [weak self] in
             // Stop audio - this ends the audio stream loop
             audio.stopCapture()
@@ -297,18 +282,21 @@ final class AppState: ObservableObject {
             do {
                 try await transcription.finalize()
                 print("[VoiceWrite] Transcription finalized")
-                // Pre-warm next session immediately
-                await transcription.prewarm()
             } catch {
                 print("[VoiceWrite] Finalize error: \(error)")
             }
 
-            // NOW end typing session after all results are in
-            continuation?.yield(.reset)
-            continuation?.finish()  // Signal stream end so consumer completes
-            self?.typingContinuation = nil
-            await typing.endSession()  // Wait for consumer to finish
-            print("[VoiceWrite] Typing session ended")
+            // Wait for refinement Task to complete (spawned in onFinal callback)
+            // and for the UI to update
+            try? await Task.sleep(for: .milliseconds(100))
+
+            // Paste final text and hide preview window
+            // Window stays visible until paste completes
+            await preview.pasteAndHide()
+            print("[VoiceWrite] Preview paste complete")
+
+            // Pre-warm next session
+            await transcription.prewarm()
         }
 
         print("[VoiceWrite] stopListening() complete")

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>TISIntendedLanguage</key>
+    <string>und</string>
+    <key>CFBundleDisplayName</key>
+    <string>VoiceWrite</string>
+    <key>CFBundleExecutable</key>
+    <string>VoiceWriteInputMethod</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIdentifier</key>
+    <string>net.pineridgeranch.inputmethod.voicewrite</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>VoiceWrite</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.4.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSBackgroundOnly</key>
+    <true/>
+    <key>LSMinimumSystemVersion</key>
+    <string>26.0</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <!-- InputMethodKit Configuration -->
+    <key>InputMethodConnectionName</key>
+    <string>net.pineridgeranch.inputmethod.voicewrite_Connection</string>
+    <key>InputMethodServerControllerClass</key>
+    <string>VoiceWriteInputMethod.InputController</string>
+    <key>tsInputMethodCharacterRepertoireKey</key>
+    <array>
+        <string>Zsym</string>
+    </array>
+    <key>tsInputMethodIconFileKey</key>
+    <string>AppIcon</string>
+
+    <!-- Component description for Text Input Sources -->
+    <key>ComponentInputModeDict</key>
+    <dict>
+        <key>tsInputModeListKey</key>
+        <dict>
+            <key>net.pineridgeranch.inputmethod.VoiceWrite</key>
+            <dict>
+                <key>tsInputModeMenuTitleKey</key>
+                <string>VoiceWrite</string>
+                <key>tsInputModeAlternateMenuIconFileKey</key>
+                <string>MenuIcon</string>
+                <key>tsInputModeDefaultStateKey</key>
+                <true/>
+                <key>tsInputModeKeyEquivalentModifiersKey</key>
+                <integer>0</integer>
+                <key>tsInputModeMenuIconFileKey</key>
+                <string>MenuIcon</string>
+                <key>tsInputModeScriptKey</key>
+                <integer>126</integer>
+                <key>tsInputModeIsVisibleKey</key>
+                <true/>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

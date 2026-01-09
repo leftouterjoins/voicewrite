@@ -1,10 +1,14 @@
 import AVFoundation
 @preconcurrency import ApplicationServices
 import AppKit
+import SwiftUI
 
 @MainActor
 final class PermissionManager {
     static let shared = PermissionManager()
+
+    /// Track whether we've already asked for accessibility permission (ask only once)
+    @AppStorage("hasAskedForAccessibility") private var hasAskedForAccessibility = false
 
     private init() {}
 
@@ -29,6 +33,18 @@ final class PermissionManager {
         AXIsProcessTrustedWithOptions(options)
     }
 
+    /// Request accessibility permission only if we haven't asked before
+    /// This ensures we only prompt the user once - if they deny, we don't ask again
+    func requestAccessibilityIfNeeded() {
+        guard !hasAskedForAccessibility else {
+            print("[VoiceWrite] Accessibility already asked, skipping prompt")
+            return
+        }
+        hasAskedForAccessibility = true
+        print("[VoiceWrite] First time asking for accessibility permission")
+        requestAccessibilityPermission()
+    }
+
     func openAccessibilitySettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
@@ -42,12 +58,13 @@ final class PermissionManager {
     }
 
     func checkAndRequestPermissions() {
+        // Always request microphone if not granted
         if !hasMicrophonePermission {
             requestMicrophonePermission()
         }
 
-        if !hasAccessibilityPermission {
-            requestAccessibilityPermission()
-        }
+        // Only ask for accessibility ONCE ever (on first launch)
+        // If user denies, we won't ask again - we'll fall back to Input Method or clipboard
+        requestAccessibilityIfNeeded()
     }
 }

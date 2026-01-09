@@ -2,31 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- App Sandbox (required for App Store) -->
-    <key>com.apple.security.app-sandbox</key>
-    <true/>
-
-    <!-- Microphone access for speech recognition -->
-    <key>com.apple.security.device.audio-input</key>
-    <true/>
-
-    <!-- Network access (for potential model downloads) -->
-    <key>com.apple.security.network.client</key>
-    <true/>
-
-    <!-- User-selected files (for potential export features) -->
-    <key>com.apple.security.files.user-selected.read-write</key>
-    <true/>
-
-    <!-- USB HID device access for headset buttons -->
-    <key>com.apple.security.device.usb</key>
-    <true/>
-
-    <!-- Sparkle XPC service for auto-updates (required for sandboxed apps) -->
-    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
-    <array>
-        <string>com.voicewrite.app-spks</string>
-        <string>com.voicewrite.app-spki</string>
-    </array>
+    <!-- Hardened runtime exceptions -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <false/>
 </dict>
 </plist>
