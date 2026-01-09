@@ -103,7 +103,6 @@ struct GeneralSettingsView: View {
 struct LanguageSettingsView: View {
     @EnvironmentObject var languageManager: LanguageManager
     @State private var showAddLanguage = false
-    @State private var hasAccessibility = false
 
     var body: some View {
         Form {
@@ -115,8 +114,7 @@ struct LanguageSettingsView: View {
                     ForEach(languageManager.myLanguages, id: \.identifier) { locale in
                         LanguageRowWithHotkey(
                             locale: locale,
-                            languageManager: languageManager,
-                            hasAccessibility: hasAccessibility
+                            languageManager: languageManager
                         )
                     }
                 }
@@ -144,29 +142,11 @@ struct LanguageSettingsView: View {
                         .font(.caption)
                 }
             }
-
-            if !hasAccessibility {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Accessibility Permission Required", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text("Grant accessibility permission to enable hotkeys.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Button("Open Accessibility Settings") {
-                            PermissionManager.shared.openAccessibilitySettings()
-                        }
-                    }
-                }
-            }
         }
         .formStyle(.grouped)
         .padding()
         .sheet(isPresented: $showAddLanguage) {
             AddLanguageSheet(languageManager: languageManager)
-        }
-        .onAppear {
-            hasAccessibility = AXIsProcessTrusted()
         }
         .task {
             await languageManager.refreshSupportedLocales()
@@ -178,7 +158,6 @@ struct LanguageSettingsView: View {
 struct LanguageRowWithHotkey: View {
     let locale: Locale
     @ObservedObject var languageManager: LanguageManager
-    let hasAccessibility: Bool
 
     private var isDefault: Bool { languageManager.isDefault(locale) }
     private var isCurrent: Bool {
@@ -266,7 +245,8 @@ struct LanguageRowWithHotkey: View {
             }
 
             // Hotkey recorder (far right, with padding)
-            if hasAccessibility && isInstalled {
+            // Note: KeyboardShortcuts uses Carbon API which does NOT require accessibility
+            if isInstalled {
                 KeyboardShortcuts.Recorder(for: languageManager.hotkeyName(for: locale))
                     .frame(width: 140)
             }
@@ -410,30 +390,38 @@ struct PermissionsSettingsView: View {
 
     var body: some View {
         Form {
-            LabeledContent("Microphone") {
-                HStack {
-                    Image(systemName: hasMicPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(hasMicPermission ? .green : .red)
-                    Text(hasMicPermission ? "Granted" : "Required")
-                    if !hasMicPermission {
-                        Button("Request") {
-                            PermissionManager.shared.requestMicrophonePermission()
+            Section {
+                LabeledContent("Microphone") {
+                    HStack {
+                        Image(systemName: hasMicPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundStyle(hasMicPermission ? .green : .red)
+                        Text(hasMicPermission ? "Granted" : "Required")
+                        if !hasMicPermission {
+                            Button("Request") {
+                                PermissionManager.shared.requestMicrophonePermission()
+                            }
                         }
                     }
                 }
+            } footer: {
+                Text("Required for voice recording.")
             }
 
-            LabeledContent("Accessibility") {
-                HStack {
-                    Image(systemName: hasAccessibilityPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(hasAccessibilityPermission ? .green : .red)
-                    Text(hasAccessibilityPermission ? "Granted" : "Required")
-                    if !hasAccessibilityPermission {
-                        Button("Open Settings") {
-                            PermissionManager.shared.openAccessibilitySettings()
+            Section {
+                LabeledContent("Accessibility") {
+                    HStack {
+                        Image(systemName: hasAccessibilityPermission ? "checkmark.circle.fill" : "minus.circle.fill")
+                            .foregroundStyle(hasAccessibilityPermission ? .green : .orange)
+                        Text(hasAccessibilityPermission ? "Granted" : "Optional")
+                        if !hasAccessibilityPermission {
+                            Button("Open Settings") {
+                                PermissionManager.shared.openAccessibilitySettings()
+                            }
                         }
                     }
                 }
+            } footer: {
+                Text("Enables automatic text insertion. Without it, VoiceWrite uses the Input Method or copies to clipboard.")
             }
         }
         .formStyle(.grouped)

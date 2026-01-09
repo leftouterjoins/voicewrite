@@ -89,6 +89,9 @@ final class LanguageManager: ObservableObject {
         sortLanguages()
         saveMyLanguages()
 
+        // Register hotkey listener for this language
+        HotkeyService.shared.registerHotkey(for: locale)
+
         // Auto-download if not already installed
         if !isInstalled(locale) {
             try? await downloadModel(for: locale)
@@ -121,6 +124,9 @@ final class LanguageManager: ObservableObject {
         }
         myLanguages.removeAll { $0.identifier(.bcp47) == locale.identifier(.bcp47) }
         saveMyLanguages()
+
+        // Unregister hotkey listener for this language
+        HotkeyService.shared.unregisterHotkey(for: locale)
     }
 
     // MARK: - Model Management
