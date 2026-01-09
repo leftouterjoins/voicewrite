@@ -1,0 +1,19 @@
+/* Menu Bar */
+"menu.status.listening" = "正在聆听...";
+"menu.status.ready" = "准备就绪";
+"menu.language" = "语言";
+"menu.settings" = "设置...";
+"menu.quit" = "退出 VoiceWrite";
+"menu.copyLastDictation" = "复制上次听写";
+
+/* Transcription Preview */
+"preview.listening" = "正在聆听...";
+"preview.copiedToClipboard" = "已复制到剪贴板";
+
+/* Settings Tabs */
+"settings.general.tab" = "通用";
+"settings.language.tab" = "语言";
+"settings.dictionary.tab" = "词典";
+"settings.permissions.tab" = "权限";
+"settings.updates.tab" = "更新";
+"settings.about.tab" = "关于";

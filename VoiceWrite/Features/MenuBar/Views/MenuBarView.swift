@@ -16,8 +16,9 @@ struct MenuBarView: View {
                 Circle()
                     .fill(appState.isListening ? Color.red : Color.gray)
                     .frame(width: 8, height: 8)
-                Text(appState.isListening ? "Listening..." : "Ready")
+                Text(appState.isListening ? L10n.menuStatusListening : L10n.menuStatusReady)
                     .font(.headline)
+                    .id(appState.languageManager.currentLocale.identifier) // Force refresh on locale change
                 Spacer()
                 Text(currentLanguageCode)
                     .font(.caption)
@@ -41,14 +42,22 @@ struct MenuBarView: View {
 
             Divider()
 
+            // Copy Last Dictation
+            MenuButton(L10n.menuCopyLastDictation, systemImage: "doc.on.doc") {
+                appState.copyLastDictation()
+            }
+            .disabled(appState.lastDictation == nil || appState.lastDictation?.isEmpty == true)
+
+            Divider()
+
             // Settings and Quit
             VStack(spacing: 2) {
-                MenuButton("Settings...", systemImage: "gear") {
+                MenuButton(L10n.menuSettings, systemImage: "gear") {
                     openSettings()
                     NSApp.activate(ignoringOtherApps: true)
                 }
 
-                MenuButton("Quit VoiceWrite", systemImage: "power") {
+                MenuButton(L10n.menuQuit, systemImage: "power") {
                     NSApplication.shared.terminate(nil)
                 }
             }
@@ -96,7 +105,7 @@ private struct LanguageSwitcher: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Language")
+            Text(L10n.menuLanguage)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -185,4 +194,5 @@ private struct MenuButton: View {
         }
     }
 }
+
 

@@ -1,5 +1,7 @@
 import SwiftUI
 import Combine
+import AppKit
+import KeyboardShortcuts
 
 /// Represents the state of the transcription model
 enum ModelState: Equatable {
@@ -33,6 +35,7 @@ final class AppState: ObservableObject {
     @Published var finalizedTranscript = ""     // Confirmed transcription
     @Published var errorMessage: String?
     @Published var audioLevel: Float = 0        // 0.0-1.0 for overlay visualization
+    @Published var lastDictation: String?       // Last transcription result (for Copy Last Dictation)
 
     /// Language manager for locale/model management (exposed for Settings UI)
     let languageManager = LanguageManager()
@@ -68,6 +71,8 @@ final class AppState: ObservableObject {
         print("[VoiceWrite] Hotkey configured")
         setupHeadsetButton()
         print("[VoiceWrite] Headset button configured")
+        setupCopyLastDictationHotkey()
+        print("[VoiceWrite] Copy Last Dictation hotkey configured")
         setupLanguageManager()
         print("[VoiceWrite] Language manager configured")
     }
@@ -125,12 +130,26 @@ final class AppState: ObservableObject {
 
     private func handleLanguageHotkey(_ locale: Locale) {
         Task { @MainActor in
-            // Switch to the language if different
-            if locale.identifier(.bcp47) != languageManager.currentLocale.identifier(.bcp47) {
+            let isDifferentLanguage = locale.identifier(.bcp47) != languageManager.currentLocale.identifier(.bcp47)
+
+            if isListening && isDifferentLanguage {
+                // Stop current recording (will paste pending text)
+                stopListening()
+                // Wait for stop to complete (paste, cleanup)
+                try? await Task.sleep(for: .milliseconds(500))
+                // Switch language
                 await languageManager.setCurrentLocale(locale)
+                // Wait for locale change to complete
+                try? await Task.sleep(for: .milliseconds(100))
+                // Start new recording in new language
+                startListening()
+            } else {
+                // Normal flow: switch language if needed, then toggle
+                if isDifferentLanguage {
+                    await languageManager.setCurrentLocale(locale)
+                }
+                toggleListening()
             }
-            // Then toggle listening
-            toggleListening()
         }
     }
 
@@ -165,6 +184,14 @@ final class AppState: ObservableObject {
         // Toggle mode - no action on button up
     }
 
+    private func setupCopyLastDictationHotkey() {
+        KeyboardShortcuts.onKeyDown(for: .copyLastDictation) { [weak self] in
+            Task { @MainActor in
+                self?.copyLastDictation()
+            }
+        }
+    }
+
     private func checkPermissions() {
         PermissionManager.shared.checkAndRequestPermissions()
     }
@@ -177,6 +204,13 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Copy the last dictation result to the clipboard
+    func copyLastDictation() {
+        guard let text = lastDictation, !text.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
     private func startListening() {
         guard isModelLoaded else {
             errorMessage = "Model not loaded yet"
@@ -187,7 +221,8 @@ final class AppState: ObservableObject {
         volatileTranscript = ""
         finalizedTranscript = ""
         overlayManager.show()
-        previewManager.show()
+        let langCode = languageManager.currentLocale.language.languageCode?.identifier
+        previewManager.show(languageCode: langCode)
 
         // Capture services for use in detached task
         let transcription = transcriptionService
@@ -289,6 +324,11 @@ final class AppState: ObservableObject {
             // Wait for refinement Task to complete (spawned in onFinal callback)
             // and for the UI to update
             try? await Task.sleep(for: .milliseconds(100))
+
+            // Store last dictation before pasting (for Copy Last Dictation feature)
+            if let text = preview.displayText, !text.isEmpty {
+                self?.lastDictation = text
+            }
 
             // Paste final text and hide preview window
             // Window stays visible until paste completes

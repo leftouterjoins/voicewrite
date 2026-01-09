@@ -1,0 +1,19 @@
+/* Menu Bar */
+"menu.status.listening" = "聞いています...";
+"menu.status.ready" = "準備完了";
+"menu.language" = "言語";
+"menu.settings" = "設定...";
+"menu.quit" = "VoiceWriteを終了";
+"menu.copyLastDictation" = "最後の音声入力をコピー";
+
+/* Transcription Preview */
+"preview.listening" = "聞いています...";
+"preview.copiedToClipboard" = "クリップボードにコピーしました";
+
+/* Settings Tabs */
+"settings.general.tab" = "一般";
+"settings.language.tab" = "言語";
+"settings.dictionary.tab" = "辞書";
+"settings.permissions.tab" = "権限";
+"settings.updates.tab" = "アップデート";
+"settings.about.tab" = "このアプリについて";

@@ -1,0 +1,19 @@
+/* Menu Bar */
+"menu.status.listening" = "Слушаю...";
+"menu.status.ready" = "Готово";
+"menu.language" = "Язык";
+"menu.settings" = "Настройки...";
+"menu.quit" = "Выйти из VoiceWrite";
+"menu.copyLastDictation" = "Копировать последнюю диктовку";
+
+/* Transcription Preview */
+"preview.listening" = "Слушаю...";
+"preview.copiedToClipboard" = "Скопировано в буфер обмена";
+
+/* Settings Tabs */
+"settings.general.tab" = "Основные";
+"settings.language.tab" = "Язык";
+"settings.dictionary.tab" = "Словарь";
+"settings.permissions.tab" = "Разрешения";
+"settings.updates.tab" = "Обновления";
+"settings.about.tab" = "О программе";

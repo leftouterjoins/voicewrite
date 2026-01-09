@@ -1,6 +1,12 @@
 import KeyboardShortcuts
 import Foundation
 
+// MARK: - Keyboard Shortcuts Names
+
+extension KeyboardShortcuts.Name {
+    static let copyLastDictation = Self("copyLastDictation")
+}
+
 @MainActor
 final class HotkeyService {
     static let shared = HotkeyService()

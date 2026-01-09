@@ -6,7 +6,7 @@ APP_BUNDLE := $(APP_NAME).app
 IM_BUNDLE := VoiceWriteInputMethod.app
 IM_INSTALL_DIR := $(HOME)/Library/Input\ Methods
 INSTALL_DIR := /Applications
-VERSION := 1.5.0
+VERSION := 2.0.0
 # Development signing (for local testing)
 DEV_IDENTITY := Apple Development: support@pineridgeranch.net (Z42AQ7N7KX)
 # Distribution signing (for release)

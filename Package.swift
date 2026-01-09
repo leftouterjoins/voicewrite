@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "VoiceWrite",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v26)
     ],
@@ -22,7 +23,19 @@ let package = Package(
                 "Sparkle",
             ],
             path: "VoiceWrite",
-            exclude: ["Info.plist", "VoiceWrite.entitlements", "icon@3x.png", "AppIcon.icns"]
+            exclude: ["Info.plist", "VoiceWrite.entitlements", "icon@3x.png", "AppIcon.icns"],
+            resources: [
+                .process("Resources/en.lproj"),
+                .process("Resources/es.lproj"),
+                .process("Resources/fr.lproj"),
+                .process("Resources/de.lproj"),
+                .process("Resources/ja.lproj"),
+                .process("Resources/zh-Hans.lproj"),
+                .process("Resources/it.lproj"),
+                .process("Resources/pt-BR.lproj"),
+                .process("Resources/ko.lproj"),
+                .process("Resources/ru.lproj")
+            ]
         ),
         .executableTarget(
             name: "VoiceWriteInputMethod",

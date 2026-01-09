@@ -10,6 +10,13 @@ final class TranscriptionPreviewViewModel: ObservableObject {
     /// Feedback message to show (e.g., "Copied to clipboard")
     @Published var feedbackMessage: String?
 
+    // Animation state
+    @Published var animationScale: CGFloat = 0.8
+    @Published var animationOpacity: Double = 0.0
+
+    // Language indicator
+    @Published var languageCode: String?
+
     /// Combined display text
     var displayText: String {
         if finalizedText.isEmpty {
@@ -53,6 +60,25 @@ final class TranscriptionPreviewViewModel: ObservableObject {
     func showFeedback(_ message: String) {
         feedbackMessage = message
     }
+
+    // MARK: - Animation
+
+    func animateIn() {
+        animationScale = 0.8
+        animationOpacity = 0.0
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            animationScale = 1.0
+            animationOpacity = 1.0
+        }
+    }
+
+    func animateOut() async {
+        withAnimation(.easeOut(duration: 0.2)) {
+            animationScale = 0.9
+            animationOpacity = 0.0
+        }
+        try? await Task.sleep(for: .milliseconds(200))
+    }
 }
 
 /// Main view for the transcription preview window
@@ -80,9 +106,19 @@ struct TranscriptionPreviewView: View {
                     ProgressView()
                         .scaleEffect(0.6)
                         .frame(width: 12, height: 12)
-                    Text("Listening...")
+                    Text(L10n.previewListening)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .id(viewModel.languageCode) // Force refresh on locale change
+
+                    // Language indicator
+                    if let code = viewModel.languageCode {
+                        Text(code.uppercased())
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(.secondary.opacity(0.2)))
+                    }
                 }
             } else {
                 // Text display - shows finalized + volatile combined
@@ -100,6 +136,8 @@ struct TranscriptionPreviewView: View {
         .fixedSize(horizontal: false, vertical: true)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .scaleEffect(viewModel.animationScale)
+        .opacity(viewModel.animationOpacity)
     }
 }
 

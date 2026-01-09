@@ -1,0 +1,19 @@
+/* Menu Bar */
+"menu.status.listening" = "듣는 중...";
+"menu.status.ready" = "준비됨";
+"menu.language" = "언어";
+"menu.settings" = "설정...";
+"menu.quit" = "VoiceWrite 종료";
+"menu.copyLastDictation" = "마지막 받아쓰기 복사";
+
+/* Transcription Preview */
+"preview.listening" = "듣는 중...";
+"preview.copiedToClipboard" = "클립보드에 복사됨";
+
+/* Settings Tabs */
+"settings.general.tab" = "일반";
+"settings.language.tab" = "언어";
+"settings.dictionary.tab" = "사전";
+"settings.permissions.tab" = "권한";
+"settings.updates.tab" = "업데이트";
+"settings.about.tab" = "정보";

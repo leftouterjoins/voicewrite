@@ -52,6 +52,8 @@ struct GeneralSettingsView: View {
     @AppStorage("customColorBlue") private var customColorBlue = 0.2
     @AppStorage("enableEmoji") private var enableEmoji = false
     @AppStorage("enableTextRefinement") private var enableTextRefinement = true
+    @AppStorage("autoSendEnabled") private var autoSendEnabled = false
+    @AppStorage("autoSendKeyword") private var autoSendKeyword = "send"
 
     @State private var selectedColor: Color = .red
 
@@ -63,6 +65,24 @@ struct GeneralSettingsView: View {
 
                 Toggle("Clean Up Transcription", isOn: $enableTextRefinement)
                     .help("Remove filler words (um, uh) and fix self-corrections using on-device AI")
+            }
+
+            Section {
+                Toggle("Enable Auto-Send", isOn: $autoSendEnabled)
+                    .help("Automatically press Cmd+Return when trigger word is spoken")
+
+                if autoSendEnabled {
+                    TextField("Trigger Word", text: $autoSendKeyword)
+                        .textFieldStyle(.roundedBorder)
+
+                    Text("Requires Accessibility permission. The trigger word will be removed from the text.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Auto-Send")
+            } footer: {
+                Text("Say the trigger word at the end of your dictation to automatically send (Cmd+Return).")
             }
 
             Section("General") {
@@ -87,6 +107,13 @@ struct GeneralSettingsView: View {
                                 customColorBlue = Double(components.blueComponent)
                             }
                         }
+                }
+            }
+
+            Section("Shortcuts") {
+                LabeledContent("Copy Last Dictation") {
+                    KeyboardShortcuts.Recorder(for: .copyLastDictation)
+                        .frame(width: 140)
                 }
             }
         }

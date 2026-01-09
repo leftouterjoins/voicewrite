@@ -10,12 +10,15 @@ final class TranscriptionPreviewManager {
     // MARK: - Public API
 
     /// Show the preview window, positioned caption-style at bottom center
-    func show() {
+    /// - Parameter languageCode: Optional language code to display (e.g., "en", "es")
+    func show(languageCode: String? = nil) {
         let win = TranscriptionPreviewWindow()
+        win.viewModel.languageCode = languageCode
         positionAsCaptions(win)
         win.orderFrontRegardless()
         window = win
-        print("[VoiceWrite] TranscriptionPreview: Window shown")
+        win.viewModel.animateIn()
+        print("[VoiceWrite] TranscriptionPreview: Window shown (language: \(languageCode ?? "nil"))")
     }
 
     /// Position window like TV captions - centered horizontally, near bottom of screen
@@ -75,35 +78,59 @@ final class TranscriptionPreviewManager {
     func pasteAndHide() async {
         guard let win = window else {
             print("[VoiceWrite] TranscriptionPreview: No window, hiding")
-            hide()
+            await hide()
             return
         }
 
-        let textToPaste = win.displayText
+        var textToPaste = win.displayText
 
         guard !textToPaste.isEmpty else {
             print("[VoiceWrite] TranscriptionPreview: No text to paste, hiding")
-            hide()
+            await hide()
             return
+        }
+
+        // Check for auto-send keyword
+        let autoSendEnabled = UserDefaults.standard.bool(forKey: "autoSendEnabled")
+        let autoSendKeyword = UserDefaults.standard.string(forKey: "autoSendKeyword") ?? "send"
+        var shouldAutoSend = false
+
+        if autoSendEnabled && AXIsProcessTrusted() {
+            // Extract last word, strip punctuation/emoji/whitespace
+            let words = textToPaste.split(separator: " ", omittingEmptySubsequences: true)
+            if let lastWord = words.last {
+                // Keep only ASCII letters and digits for comparison
+                let cleanedString = String(lastWord).filter { $0.isLetter || $0.isNumber }
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+
+                print("[VoiceWrite] Auto-send check: lastWord='\(lastWord)' cleaned='\(cleanedString)' keyword='\(autoSendKeyword)'")
+
+                if !cleanedString.isEmpty && cleanedString.lowercased() == autoSendKeyword.lowercased() {
+                    shouldAutoSend = true
+                    // Remove the trigger word from the text
+                    textToPaste = words.dropLast().joined(separator: " ")
+                    print("[VoiceWrite] TranscriptionPreview: Auto-send keyword detected, will send after paste")
+                }
+            }
         }
 
         print("[VoiceWrite] TranscriptionPreview: Pasting \(textToPaste.count) characters")
 
         do {
-            let result = try await pasteService.paste(textToPaste)
+            let result = try await pasteService.paste(textToPaste, sendAfter: shouldAutoSend)
 
             switch result {
             case .inserted:
                 // Successfully inserted via Input Method - hide immediately
                 print("[VoiceWrite] TranscriptionPreview: Inserted via Input Method")
                 try? await Task.sleep(for: .milliseconds(50))
-                hide()
+                await hide()
 
             case .pasted:
                 // Successfully pasted via Cmd+V - hide immediately
                 print("[VoiceWrite] TranscriptionPreview: Paste complete")
                 try? await Task.sleep(for: .milliseconds(50))
-                hide()
+                await hide()
 
             case .copiedOnly:
                 // No accessibility or input method - show feedback then hide
@@ -115,17 +142,19 @@ final class TranscriptionPreviewManager {
                 win.showFeedback("Copied to clipboard")
                 recenterHorizontally(win)
                 try? await Task.sleep(for: .milliseconds(1500))
-                hide()
+                await hide()
             }
         } catch {
             print("[VoiceWrite] TranscriptionPreview: Paste failed: \(error)")
-            hide()
+            await hide()
         }
     }
 
-    /// Hide the window immediately
-    func hide() {
-        window?.close()
+    /// Hide the window with animation
+    func hide() async {
+        guard let win = window else { return }
+        await win.viewModel.animateOut()
+        win.close()
         window = nil
         print("[VoiceWrite] TranscriptionPreview: Window hidden")
     }
@@ -133,5 +162,10 @@ final class TranscriptionPreviewManager {
     /// Check if preview is currently visible
     var isVisible: Bool {
         window != nil
+    }
+
+    /// Get the current display text (for Copy Last Dictation)
+    var displayText: String? {
+        window?.displayText
     }
 }

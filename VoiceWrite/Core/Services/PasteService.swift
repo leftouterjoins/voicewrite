@@ -16,15 +16,19 @@ enum PasteResult {
 actor PasteService {
     private let eventSource = CGEventSource(stateID: .privateState)
 
-    // Key codes for Cmd+V
+    // Key codes for keyboard shortcuts
     private static let keyCodeV: CGKeyCode = 0x09       // 9
+    private static let keyCodeReturn: CGKeyCode = 0x24  // 36
     private static let keyCodeCommand: CGKeyCode = 0x37 // 55
 
     /// Pastes the given text using the best available method:
     /// 1. Try Accessibility paste first (best experience - preserves clipboard)
     /// 2. Fall back to Input Method (if VoiceWrite IM is active)
     /// 3. Fall back to clipboard-only (user must manually paste)
-    func paste(_ text: String) async throws -> PasteResult {
+    /// - Parameters:
+    ///   - text: The text to paste
+    ///   - sendAfter: If true, sends Cmd+Return after paste (requires accessibility permission)
+    func paste(_ text: String, sendAfter: Bool = false) async throws -> PasteResult {
         guard !text.isEmpty else { return .pasted }
 
         let pasteboard = NSPasteboard.general
@@ -51,6 +55,13 @@ actor PasteService {
             // Restore previous clipboard contents
             restorePasteboardContents(pasteboard, from: previousContents)
 
+            // Send Return if requested (auto-send feature)
+            if sendAfter {
+                try await Task.sleep(for: .milliseconds(50))
+                await sendReturn()
+                print("[VoiceWrite] PasteService: Sent Return (auto-send)")
+            }
+
             return .pasted
         }
 
@@ -65,6 +76,7 @@ actor PasteService {
             let success = await inputMethodService.insertText(text)
             if success {
                 print("[VoiceWrite] PasteService: Input Method insert successful")
+                // Note: sendAfter is not supported for Input Method (requires AX)
                 return .inserted
             }
             print("[VoiceWrite] PasteService: Input Method failed, falling back to clipboard")
@@ -112,6 +124,24 @@ actor PasteService {
         guard let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: Self.keyCodeCommand, keyDown: false) else { return }
         cmdUp.flags = []
         cmdUp.post(tap: .cghidEventTap)
+    }
+
+    /// Sends Return keyboard shortcut via CGEvent (for auto-send feature)
+    private func sendReturn() async {
+        guard let source = eventSource else {
+            print("[VoiceWrite] PasteService: Failed to create event source for Return")
+            return
+        }
+
+        // Return key down
+        guard let returnDown = CGEvent(keyboardEventSource: source, virtualKey: Self.keyCodeReturn, keyDown: true) else { return }
+        returnDown.post(tap: .cghidEventTap)
+
+        try? await Task.sleep(for: .milliseconds(10))
+
+        // Return key up
+        guard let returnUp = CGEvent(keyboardEventSource: source, virtualKey: Self.keyCodeReturn, keyDown: false) else { return }
+        returnUp.post(tap: .cghidEventTap)
     }
 
     // MARK: - Clipboard Save/Restore

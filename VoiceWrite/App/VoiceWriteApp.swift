@@ -30,6 +30,7 @@ struct VoiceWriteApp: App {
             MenuBarView()
                 .environmentObject(appState)
                 .environmentObject(updaterManager)
+                .environment(\.locale, appState.languageManager.currentLocale)
         } label: {
             // Trigger initialization when label renders (happens at app launch)
             MenuBarLabel(appState: appState, updaterManager: updaterManager)
@@ -41,6 +42,7 @@ struct VoiceWriteApp: App {
                 .environmentObject(appState)
                 .environmentObject(updaterManager)
                 .environmentObject(appState.languageManager)
+                .environment(\.locale, appState.languageManager.currentLocale)
         }
     }
 }

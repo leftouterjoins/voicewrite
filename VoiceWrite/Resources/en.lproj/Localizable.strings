@@ -1,0 +1,19 @@
+/* Menu Bar */
+"menu.status.listening" = "Listening...";
+"menu.status.ready" = "Ready";
+"menu.language" = "Language";
+"menu.settings" = "Settings...";
+"menu.quit" = "Quit VoiceWrite";
+"menu.copyLastDictation" = "Copy Last Dictation";
+
+/* Transcription Preview */
+"preview.listening" = "Listening...";
+"preview.copiedToClipboard" = "Copied to clipboard";
+
+/* Settings Tabs */
+"settings.general.tab" = "General";
+"settings.language.tab" = "Language";
+"settings.dictionary.tab" = "Dictionary";
+"settings.permissions.tab" = "Permissions";
+"settings.updates.tab" = "Updates";
+"settings.about.tab" = "About";
