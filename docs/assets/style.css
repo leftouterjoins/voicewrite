@@ -124,6 +124,38 @@ header .back-link:hover {
     align-items: center;
 }
 
+.hero.hero-centered .container {
+    display: block;
+    text-align: center;
+    max-width: 700px;
+}
+
+.hero.hero-centered h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.hero.hero-centered p {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    margin-bottom: 24px;
+}
+
+.hero.hero-centered .cta {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero.hero-centered .requirements {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: 16px;
+}
+
 .hero-content h2 {
     font-size: 2.5rem;
     font-weight: 700;
