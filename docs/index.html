@@ -3,22 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceWrite - Free Voice to Text for Mac | Wispr Flow Alternative</title>
-    <meta name="description" content="Free voice dictation app for Mac with 100% on-device processing. No subscription, no cloud. The best open-source Wispr Flow alternative with real-time typing and multi-language support.">
-    <meta name="keywords" content="voice to text mac, speech to text macos, mac dictation app, voice typing mac, wispr flow alternative, wisprflow free alternative, free voice dictation mac, offline voice to text mac, private dictation app, on-device speech recognition, open source voice to text, dictation app without subscription, speech recognition macOS, voice input mac">
+    <title>VoiceWrite - Voice Command Interface for macOS</title>
+    <meta name="description" content="Free voice dictation app for Mac with 100% on-device processing. No subscription, no cloud. The best open-source Wispr Flow alternative.">
+    <meta name="keywords" content="voice to text mac, speech to text macos, mac dictation app, voice typing mac, wispr flow alternative, free voice dictation mac, offline voice to text mac, private dictation app">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="VoiceWrite - Free Voice to Text for Mac">
-    <meta property="og:description" content="Free, open-source voice dictation for Mac. 100% on-device, no subscription. The best Wispr Flow alternative.">
+    <meta property="og:title" content="VoiceWrite - Voice Command Interface for macOS">
+    <meta property="og:description" content="Free, open-source voice dictation for Mac. 100% on-device, no subscription.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://leftouterjoins.github.io/voicewrite/">
     <meta property="og:image" content="https://leftouterjoins.github.io/voicewrite/assets/icon.png">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="VoiceWrite - Free Voice to Text for Mac">
-    <meta name="twitter:description" content="Free, open-source voice dictation for Mac. 100% on-device, no subscription.">
-    <meta name="twitter:image" content="https://leftouterjoins.github.io/voicewrite/assets/icon.png">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -33,100 +27,106 @@
             "price": "0",
             "priceCurrency": "USD"
         },
-        "description": "Free, open-source voice-to-text app for Mac with 100% on-device processing. No cloud, no subscription.",
+        "description": "Free, open-source voice-to-text app for Mac with 100% on-device processing.",
         "downloadUrl": "https://github.com/leftouterjoins/voicewrite/releases/latest",
-        "softwareVersion": "2.0.0",
-        "author": {
-            "@type": "Organization",
-            "name": "leftouterjoins"
-        },
-        "license": "https://opensource.org/licenses/MIT"
+        "softwareVersion": "2.0.0"
     }
     </script>
 
     <link rel="stylesheet" href="assets/style.css">
-    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 </head>
 <body>
     <header>
         <div class="container">
-            <img src="assets/icon.png" alt="VoiceWrite" width="80" height="80" class="logo">
+            <img src="assets/icon.svg" alt="VoiceWrite" class="logo">
             <h1>VoiceWrite</h1>
-            <p class="tagline">Private voice-to-text for macOS</p>
+            <p class="tagline">Voice Command Interface</p>
         </div>
     </header>
 
     <main>
-        <section class="hero hero-centered">
+        <section class="hero">
             <div class="container">
-                <h2>Your voice stays on your Mac</h2>
-                <p>VoiceWrite uses Apple's on-device SpeechAnalyzer. No cloud servers, no subscriptions, no data collection. Just press your hotkey and talk.</p>
+                <h2>Your Voice Stays On Your Mac</h2>
+                <p>On-device speech recognition powered by Apple's SpeechAnalyzer. No cloud servers. No subscriptions. No data collection.</p>
                 <div class="cta">
-                    <a href="https://github.com/leftouterjoins/voicewrite/releases/latest" class="btn primary">Download for macOS</a>
-                    <a href="https://github.com/leftouterjoins/voicewrite" class="btn secondary">View on GitHub</a>
+                    <a href="https://github.com/leftouterjoins/voicewrite/releases/latest" class="btn primary">Download</a>
+                    <a href="https://github.com/leftouterjoins/voicewrite" class="btn secondary">View Source</a>
                 </div>
-                <p class="requirements">Requires macOS 26.0 (Tahoe) or later</p>
+                <p class="status">System Ready — macOS Tahoe Required</p>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="container">
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">On-Device</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">10</div>
+                    <div class="stat-label">Languages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">&lt;5MB</div>
+                    <div class="stat-label">Footprint</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">0ms</div>
+                    <div class="stat-label">Cloud Latency</div>
+                </div>
             </div>
         </section>
 
         <section class="features">
             <div class="container">
-                <h2>Why VoiceWrite?</h2>
+                <h2>System Capabilities</h2>
                 <div class="feature-grid">
                     <div class="feature">
                         <div class="feature-icon">🔒</div>
                         <h3>Privacy First</h3>
-                        <p>100% on-device speech recognition using Apple's SpeechAnalyzer. Your audio never leaves your Mac.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">✨</div>
-                        <h3>Smart Punctuation</h3>
-                        <p>Automatic periods, commas, and question marks. Optional emoji conversion—say "heart" to type ❤️.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">🎨</div>
-                        <h3>Visual Feedback</h3>
-                        <p>Screen border glows while recording so you always know it's working.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">⚡</div>
-                        <h3>Tiny Footprint</h3>
-                        <p>Under 5MB on disk—no bundled ML models like Whisper. macOS manages speech assets automatically.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">⌨️</div>
-                        <h3>Live Preview</h3>
-                        <p>Watch your words appear in real-time in a floating preview window. Text is pasted when you stop recording.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">🎧</div>
-                        <h3>Headset Support</h3>
-                        <p>Use your USB headset's call button to toggle recording. Works with Teams/Zoom compatible headsets.</p>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-icon">💻</div>
-                        <h3>Open Source</h3>
-                        <p>MIT licensed, free forever. Audit the code, contribute improvements, or fork it for your own projects.</p>
+                        <p>100% on-device speech recognition. Your audio never leaves your Mac.</p>
                     </div>
                     <div class="feature">
                         <div class="feature-icon">🌍</div>
                         <h3>Multi-Language</h3>
-                        <p>10 languages with dedicated hotkeys. The entire app UI switches to match your transcription language.</p>
+                        <p>10 languages with dedicated hotkeys. UI switches to match your transcription language.</p>
                     </div>
                     <div class="feature">
                         <div class="feature-icon">📤</div>
                         <h3>Auto-Send</h3>
-                        <p>Say a trigger word like "send" to automatically press Return after paste. Perfect for chat apps and forms.</p>
+                        <p>Say a trigger word to automatically press Return after paste. Perfect for chat apps.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🎧</div>
+                        <h3>Headset Support</h3>
+                        <p>Use your USB headset's call button to toggle recording. Teams/Zoom compatible.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">⌨️</div>
+                        <h3>Live Preview</h3>
+                        <p>Watch your words appear in real-time in a floating preview window.</p>
                     </div>
                     <div class="feature">
                         <div class="feature-icon">🧹</div>
                         <h3>Smart Cleanup</h3>
-                        <p>On-device AI removes filler words (um, uh) and fixes self-corrections automatically.</p>
+                        <p>On-device AI removes filler words and fixes self-corrections automatically.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">✨</div>
+                        <h3>Smart Punctuation</h3>
+                        <p>Automatic periods, commas, and question marks. Optional emoji conversion.</p>
                     </div>
                     <div class="feature">
                         <div class="feature-icon">📖</div>
                         <h3>Custom Dictionary</h3>
-                        <p>Add names, technical terms, and jargon to improve recognition accuracy for your vocabulary.</p>
+                        <p>Add names, technical terms, and jargon to improve recognition accuracy.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">💻</div>
+                        <h3>Open Source</h3>
+                        <p>MIT licensed, free forever. Audit the code or fork it for your own projects.</p>
                     </div>
                 </div>
             </div>
@@ -134,27 +134,27 @@
 
         <section class="how-it-works">
             <div class="container">
-                <h2>How It Works</h2>
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>Launch</h3>
-                        <p>VoiceWrite lives in your menu bar. Grant microphone and accessibility permissions on first run.</p>
+                <h2>Mission Sequence</h2>
+                <div class="phases">
+                    <div class="phase">
+                        <div class="phase-number">01</div>
+                        <h3>Initialize</h3>
+                        <p>Launch VoiceWrite. Grant microphone permissions.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>Press Hotkey</h3>
-                        <p>Hit Ctrl+V (customizable) from anywhere. The screen border lights up to show you're recording.</p>
+                    <div class="phase">
+                        <div class="phase-number">02</div>
+                        <h3>Engage</h3>
+                        <p>Press your hotkey from anywhere. Screen border activates.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>Speak</h3>
-                        <p>Talk naturally. See your words appear in real-time with live transcription preview.</p>
+                    <div class="phase">
+                        <div class="phase-number">03</div>
+                        <h3>Transmit</h3>
+                        <p>Speak naturally. Watch real-time transcription preview.</p>
                     </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <h3>Done</h3>
-                        <p>Press the hotkey again. Your transcribed text is typed into the active app automatically.</p>
+                    <div class="phase">
+                        <div class="phase-number">04</div>
+                        <h3>Execute</h3>
+                        <p>Press hotkey again. Text pastes into active app.</p>
                     </div>
                 </div>
             </div>
@@ -162,13 +162,13 @@
 
         <section class="comparison">
             <div class="container">
-                <h2>Free Wispr Flow Alternative</h2>
-                <p class="section-intro">Looking for a voice dictation app without monthly fees? VoiceWrite delivers the same core features as paid alternatives—completely free.</p>
+                <h2>System Comparison</h2>
+                <p class="section-intro">Voice dictation without monthly fees or cloud dependencies.</p>
                 <div class="comparison-table">
                     <table>
                         <thead>
                             <tr>
-                                <th>Feature</th>
+                                <th>Metric</th>
                                 <th>VoiceWrite</th>
                                 <th>Paid Apps</th>
                             </tr>
@@ -195,27 +195,12 @@
                                 <td>No</td>
                             </tr>
                             <tr>
-                                <td>Real-time typing</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Multi-language</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
-                                <td>Custom vocabulary</td>
-                                <td><strong>Yes</strong></td>
-                                <td>Yes</td>
-                            </tr>
-                            <tr>
                                 <td>Works offline</td>
                                 <td><strong>Yes</strong></td>
                                 <td>Limited</td>
                             </tr>
                             <tr>
-                                <td>Auto-send messages</td>
+                                <td>Auto-send</td>
                                 <td><strong>Yes</strong></td>
                                 <td>No</td>
                             </tr>
@@ -227,27 +212,23 @@
 
         <section class="faq">
             <div class="container">
-                <h2>FAQ</h2>
+                <h2>Technical Briefing</h2>
                 <div class="faq-list">
                     <div class="faq-item">
                         <h3>How is VoiceWrite different from other dictation apps?</h3>
-                        <p>VoiceWrite is designed for quick, single-line input — not long-form dictation. It's ideal for form fields, quick messages, search queries, short notes, and vibe coding. For paragraphs or documents, use macOS's built-in Dictation.</p>
+                        <p>VoiceWrite is designed for quick input — form fields, messages, search queries, and vibe coding. For long-form documents, use macOS's built-in Dictation.</p>
                     </div>
                     <div class="faq-item">
                         <h3>Is VoiceWrite a good Wispr Flow alternative?</h3>
-                        <p>Yes! VoiceWrite offers similar core features—real-time voice typing, hotkey activation, multi-language support, and smart punctuation—but completely free and with better privacy since everything runs on-device.</p>
-                    </div>
-                    <div class="faq-item">
-                        <h3>Why choose VoiceWrite over paid voice dictation apps?</h3>
-                        <p>VoiceWrite is free, open source, and processes all audio locally on your Mac. No subscription fees, no cloud uploads, no account required. Your voice data never leaves your computer.</p>
+                        <p>Yes. Real-time voice typing, hotkey activation, multi-language support, smart punctuation — completely free with better privacy since everything runs on-device.</p>
                     </div>
                     <div class="faq-item">
                         <h3>How does the live preview work?</h3>
-                        <p>VoiceWrite shows your transcription in a floating preview window as you speak. When you stop recording, the final text is pasted into your active app. This gives you a chance to see what was transcribed before it's inserted.</p>
+                        <p>VoiceWrite shows your transcription in a floating preview window as you speak. When you stop recording, the final text is pasted into your active app.</p>
                     </div>
                     <div class="faq-item">
                         <h3>Does it work in Terminal?</h3>
-                        <p>Yes! VoiceWrite pastes text using Cmd+V which works in Terminal and virtually any app. For the best experience, enable the VoiceWrite Input Method in System Settings.</p>
+                        <p>Yes. VoiceWrite pastes text using Cmd+V which works in Terminal and virtually any app. For best experience, enable the VoiceWrite Input Method.</p>
                     </div>
                 </div>
             </div>
@@ -255,10 +236,10 @@
 
         <section class="download" id="download">
             <div class="container">
-                <h2>Get VoiceWrite</h2>
+                <h2>Deploy Now</h2>
                 <p>Free. Open source. No account required.</p>
-                <a href="https://github.com/leftouterjoins/voicewrite/releases/latest" class="btn primary large">Download Latest Release</a>
-                <p class="version">Version 2.0.0 &middot; <a href="https://github.com/leftouterjoins/voicewrite/releases">Changelog</a></p>
+                <a href="https://github.com/leftouterjoins/voicewrite/releases/latest" class="btn primary large">Download Latest Build</a>
+                <p class="version">BUILD 2.0.0 · <a href="https://github.com/leftouterjoins/voicewrite/releases">Changelog</a></p>
             </div>
         </section>
     </main>
@@ -269,11 +250,10 @@
                 <a href="https://github.com/leftouterjoins/voicewrite">GitHub</a>
                 <a href="https://github.com/leftouterjoins/voicewrite/issues">Issues</a>
                 <a href="https://github.com/leftouterjoins/voicewrite/discussions">Discussions</a>
-                <a href="privacy.html">Privacy Policy</a>
+                <a href="privacy.html">Privacy</a>
             </div>
-            <p class="copyright">Made with 100% organic, grass-fed, free range vibes.</p>
+            <p class="copyright">Mission Control 2036</p>
         </div>
     </footer>
-
 </body>
 </html>
