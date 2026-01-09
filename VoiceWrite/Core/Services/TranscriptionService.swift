@@ -2,13 +2,6 @@ import Foundation
 import Speech
 @preconcurrency import AVFoundation
 
-/// Default vocabulary words always included in transcription hints
-let defaultVocabulary = [
-    "Claude",
-    "ultrathink",
-    "VoiceWrite"
-]
-
 @MainActor
 final class TranscriptionService: ObservableObject {
     private var analyzer: SpeechAnalyzer?
@@ -136,14 +129,12 @@ final class TranscriptionService: ObservableObject {
         try await analyzer.start(inputSequence: stream)
 
         // Set context with vocabulary hints for proper noun recognition
-        // Combine default vocabulary with user's custom vocabulary
-        var vocabularyHints = defaultVocabulary
-        vocabularyHints.append(contentsOf: customVocabulary)
-
         let context = AnalysisContext()
-        context.contextualStrings = [
-            AnalysisContext.ContextualStringsTag("vocabulary"): vocabularyHints
-        ]
+        if !customVocabulary.isEmpty {
+            context.contextualStrings = [
+                AnalysisContext.ContextualStringsTag("vocabulary"): customVocabulary
+            ]
+        }
         try await analyzer.setContext(context)
     }
 
@@ -172,13 +163,12 @@ final class TranscriptionService: ObservableObject {
             try await analyzer.start(inputSequence: stream)
 
             // Set context with vocabulary hints (same as startAnalyzer)
-            var vocabularyHints = defaultVocabulary
-            vocabularyHints.append(contentsOf: customVocabulary)
-
             let context = AnalysisContext()
-            context.contextualStrings = [
-                AnalysisContext.ContextualStringsTag("vocabulary"): vocabularyHints
-            ]
+            if !customVocabulary.isEmpty {
+                context.contextualStrings = [
+                    AnalysisContext.ContextualStringsTag("vocabulary"): customVocabulary
+                ]
+            }
             try await analyzer.setContext(context)
 
             print("[VoiceWrite] Pre-warm complete")

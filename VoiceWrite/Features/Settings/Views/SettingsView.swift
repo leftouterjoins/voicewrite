@@ -307,8 +307,12 @@ struct AddLanguageSheet: View {
 
 struct DictionarySettingsView: View {
     @AppStorage("customVocabularyData") private var customVocabularyData: Data = Data()
+    @AppStorage("hasSeededVocabulary") private var hasSeededVocabulary = false
     @State private var newWord = ""
     @State private var vocabularyList: [String] = []
+
+    /// Default vocabulary words seeded on first launch (user can remove them)
+    private static let defaultWords = ["Claude", "ultrathink", "VoiceWrite"]
 
     var body: some View {
         Form {
@@ -326,7 +330,7 @@ struct DictionarySettingsView: View {
                 }
 
                 if vocabularyList.isEmpty {
-                    Text("No custom words added yet. Add names, technical terms, or phrases that are often misrecognized.")
+                    Text("No words added. Add names, technical terms, or phrases that are often misrecognized.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -358,8 +362,18 @@ struct DictionarySettingsView: View {
     }
 
     private func loadVocabulary() {
+        // Load existing vocabulary first
         if let decoded = try? JSONDecoder().decode([String].self, from: customVocabularyData) {
             vocabularyList = decoded
+        }
+
+        // Seed with defaults on first launch (only if no existing vocabulary)
+        if !hasSeededVocabulary {
+            hasSeededVocabulary = true
+            if vocabularyList.isEmpty {
+                vocabularyList = Self.defaultWords.sorted()
+                saveVocabulary()
+            }
         }
     }
 
