@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/icon.png" width="128" height="128" alt="VoiceWrite">
+  <img src="docs/assets/icon.svg" width="128" height="128" alt="VoiceWrite">
 </p>
 
 <h1 align="center">VoiceWrite</h1>
