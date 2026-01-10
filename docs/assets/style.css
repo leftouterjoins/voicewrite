@@ -4,7 +4,7 @@
     --black: #000000;
     --void: #050508;
     --surface: #0a0f14;
-    --grid: #0f1a24;
+    --grid: #1a3a4a;
     --border: #1a2a3a;
     --cyan: #00ffff;
     --cyan-dim: #00aaaa;
@@ -39,7 +39,7 @@ body::before {
         linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 60px 60px;
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0.6;
     z-index: -1;
 }
 
@@ -78,6 +78,7 @@ header h1 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 0 30px var(--cyan-glow));
 }
 
 header .tagline {
@@ -702,5 +703,62 @@ header.compact .date {
     .footer-links {
         flex-direction: column;
         gap: 12px;
+    }
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+    :root {
+        --black: #ffffff;
+        --void: #f8f9fa;
+        --surface: #ffffff;
+        --grid: #d0e0e8;
+        --border: #c0d0d8;
+        --cyan: #008080;
+        --cyan-dim: #006666;
+        --cyan-glow: rgba(0, 128, 128, 0.2);
+        --white: #1a1a2e;
+        --gray: #5a6a7a;
+    }
+
+    body::before {
+        opacity: 0.5;
+    }
+
+    header h1 {
+        background: linear-gradient(180deg, var(--white) 0%, var(--cyan) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .btn.primary {
+        background: var(--cyan);
+        color: var(--black);
+        box-shadow: 0 4px 12px var(--cyan-glow);
+    }
+
+    .btn.primary:hover {
+        box-shadow: 0 6px 20px var(--cyan-glow);
+    }
+
+    .feature {
+        background: var(--void);
+        border-color: var(--border);
+    }
+
+    .phase {
+        background: var(--void);
+        border-color: var(--border);
+    }
+
+    .faq-item {
+        background: var(--void);
+        border-color: var(--border);
+    }
+
+    footer {
+        background: var(--void);
+        border-top-color: var(--border);
     }
 }
