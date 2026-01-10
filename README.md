@@ -114,10 +114,6 @@ make clean
 
 ## FAQ
 
-**How is VoiceWrite different from other dictation apps?**
-
-VoiceWrite is designed for quick input — form fields, messages, search queries, and vibe coding. For long-form documents, use macOS's built-in Dictation.
-
 **Why does text get retyped as I speak?**
 
 VoiceWrite shows real-time results by deleting and retyping text as the transcription updates. This works best for short phrases. For longer input, pause briefly to let the transcription stabilize.
