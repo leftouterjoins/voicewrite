@@ -26,8 +26,11 @@ build:
 release:
 	@# Ensure dependencies are resolved
 	swift package resolve
+	@# Reset KeyboardShortcuts checkout to ensure clean patch application
+	@cd .build/checkouts/KeyboardShortcuts && git checkout Sources/KeyboardShortcuts/Utilities.swift 2>/dev/null || true
 	@# Patch KeyboardShortcuts to use resourceURL for bundle lookup (works with macOS app bundles)
-	@sed -i '' 's|NSLocalizedString(self, bundle: .module, comment: self)|NSLocalizedString(self, bundle: Bundle.main.resourceURL.flatMap { $$0.appendingPathComponent("KeyboardShortcuts_KeyboardShortcuts.bundle") }.flatMap { Bundle(url: $$0) } ?? .module, comment: self)|g' \
+	@# Use Bundle.main as fallback instead of .module to avoid crash when bundle not found
+	@sed -i '' 's|NSLocalizedString(self, bundle: .module, comment: self)|NSLocalizedString(self, bundle: Bundle.main.resourceURL.flatMap { $$0.appendingPathComponent("KeyboardShortcuts_KeyboardShortcuts.bundle") }.flatMap { Bundle(url: $$0) } ?? Bundle.main, comment: self)|g' \
 		.build/checkouts/KeyboardShortcuts/Sources/KeyboardShortcuts/Utilities.swift 2>/dev/null || true
 	swift build -c release
 	@echo "Release build complete"
