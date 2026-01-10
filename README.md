@@ -122,9 +122,29 @@ VoiceWrite is designed for quick input — form fields, messages, search queries
 
 VoiceWrite shows real-time results by deleting and retyping text as the transcription updates. This works best for short phrases. For longer input, pause briefly to let the transcription stabilize.
 
-**Does it work in Terminal?**
+**What are the system requirements?**
 
-Yes! VoiceWrite uses standard macOS keyboard shortcuts (Ctrl-A, Ctrl-K) that work in Terminal, text editors, and virtually any app.
+macOS 26 (Tahoe) or later. VoiceWrite uses Apple's SpeechAnalyzer API which is only available on macOS 26+.
+
+**Does it work offline?**
+
+Yes. All speech recognition happens on-device using Apple's native models. No internet connection required.
+
+**What permissions does it need?**
+
+Microphone access for recording and Accessibility permission to type text into other apps.
+
+**Is it really free?**
+
+Yes. VoiceWrite is free and open source under the MIT license. No subscriptions, no ads, no accounts.
+
+**What languages are supported?**
+
+VoiceWrite supports 22 languages via Apple's SpeechAnalyzer: العربية, Dansk, Deutsch, English, Español, Suomi, Français, עברית, Italiano, 日本語, 한국어, Bahasa Melayu, Norsk, Nederlands, Português, Русский, Svenska, ไทย, Türkçe, Tiếng Việt, 粵語, 中文. It automatically uses your system language.
+
+**Can I change the keyboard shortcut?**
+
+Yes. Open VoiceWrite settings and click the hotkey field to record a new shortcut. The default is Cmd+Shift+D.
 
 ---
 
